@@ -1,1 +1,1 @@
-# ChildGPT: children-stories XXXX
+# The Stor-AI-teller: children-stories XXXX
