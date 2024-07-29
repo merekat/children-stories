@@ -1,6 +1,6 @@
-# StoryTeller AI
+# ChildGPT
 
-StoryTeller AI is an innovative application that creates custom children's stories based on input parameters such as age and other preferences. What sets this app apart is its ability to narrate these stories using an AI-generated voice that mimics a parent or loved one, trained on their voice samples. Additionally, the app generates captivating images to accompany each story, providing a unique and engaging experience for children.
+ChildGPT is an innovative application that creates custom children's stories based on input parameters such as age and other preferences. What sets this app apart is its ability to narrate these stories using an AI-generated voice that mimics a parent or loved one, trained on their voice samples. Additionally, the app generates captivating images to accompany each story, providing a unique and engaging experience for children.
 
 ## Features
 
