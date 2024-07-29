@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Text-to-Speech</title>
+</head>
+<body>
+    <h1>Androcles and the Lion</h1>
+    <button id="startButton">Start Processing</button>
+    <div id="content"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#startButton').click(function() {
+                const eventSource = new EventSource('http://localhost:5000/process');
+                
+                eventSource.onmessage = function(event) {
+                    const result = JSON.parse(event.data);
+                    console.log("Received data:", result);  // Debug log
+                    const contentHtml = `
+                        <div>
+                            <audio controls>
+                                <source src="${result.audio}" type="audio/wav">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <p>${result.text}</p>
+                        </div>
+                    `;
+                    $('#content').append(contentHtml);
+                };
+
+                eventSource.onerror = function(event) {
+                    console.error("EventSource failed:", event);
+                    eventSource.close();
+                };
+            });
+        });
+    </script>
+</body>
+</html>
