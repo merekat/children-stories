@@ -2,7 +2,10 @@
 *.log
 
 # Ignore the build directory
-/build/
+/built/model/
+/built/static/
+/built/audio/
+
 
 # Ignore a specific file
 .python-version
