@@ -1,37 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dynamic Text-to-Speech</title>
+
+    <style>
+        #content {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+
+        .chunk {
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
+
 <body>
     <h1>Androcles and the Lion</h1>
-    <button id="startButton">Start Processing</button>
+    <button id="startButton" type="button">Start Processing</button>
     <div id="content"></div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        $(document).ready(function() {
-            $('#startButton').click(function() {
-                const eventSource = new EventSource('http://localhost:5000/process');
-                
-                eventSource.onmessage = function(event) {
+        $(document).ready(function () {
+            let eventSource;
+
+            $('#startButton').click(function (event) {
+                event.preventDefault(); // Prevent default action
+
+                // Close existing EventSource if any
+                if (eventSource) {
+                    eventSource.close();
+                }
+
+                // Clear existing content
+                $('#content').empty();
+
+                // Create a new EventSource
+                eventSource = new EventSource('http://127.0.0.1:5000/process');
+                console.log("EventSource created");
+
+                eventSource.onmessage = function (event) {
                     const result = JSON.parse(event.data);
-                    console.log("Received data:", result);  // Debug log
+                    console.log("Received data:", result);
+
                     const contentHtml = `
-                        <div>
+                        <div class="chunk">
                             <audio controls>
-                                <source src="${result.audio}" type="audio/wav">
+                                <source src="http://127.0.0.1:5000${result.audio}" type="audio/wav">
                                 Your browser does not support the audio element.
                             </audio>
                             <p>${result.text}</p>
                         </div>
                     `;
                     $('#content').append(contentHtml);
+                    console.log("Content appended");
+
+                    // Scroll to the bottom of the content
+                    $('#content').scrollTop($('#content')[0].scrollHeight);
                 };
 
-                eventSource.onerror = function(event) {
+                eventSource.onerror = function (event) {
                     console.error("EventSource failed:", event);
                     eventSource.close();
                 };
@@ -39,4 +73,5 @@
         });
     </script>
 </body>
+
 </html>
