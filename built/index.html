@@ -28,47 +28,62 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
+            const startButton = $('#startButton');
+            const content = $('#content');
+            const loadingMessage = $('<span id="loadingMessage">Data processing ...</span>').hide();
+            startButton.after(loadingMessage); // Add loading message after the button
+
             let eventSource;
+            let audioPlayers = [];
 
-            $('#startButton').click(function (event) {
-                event.preventDefault(); // Prevent default action
-
-                // Close existing EventSource if any
+            startButton.on('click', function (event) {
+                event.preventDefault();
                 if (eventSource) {
                     eventSource.close();
                 }
 
-                // Clear existing content
-                $('#content').empty();
+                content.empty();
+                audioPlayers = [];
+                loadingMessage.show(); // Show loading message
 
-                // Create a new EventSource
                 eventSource = new EventSource('http://127.0.0.1:5000/process');
-                console.log("EventSource created");
 
                 eventSource.onmessage = function (event) {
-                    const result = JSON.parse(event.data);
-                    console.log("Received data:", result);
+                    const data = JSON.parse(event.data);
+                    console.log("Received data:", data);
+                    const chunkDiv = document.createElement('div');
+                    chunkDiv.className = 'chunk';
+                    chunkDiv.innerHTML = `
+                    <p>${data.text}</p>
+                    <audio controls>
+                        <source src="${data.audio}" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>
+                `;
+                    content.append(chunkDiv);
 
-                    const contentHtml = `
-                        <div class="chunk">
-                            <audio controls>
-                                <source src="http://127.0.0.1:5000${result.audio}" type="audio/wav">
-                                Your browser does not support the audio element.
-                            </audio>
-                            <p>${result.text}</p>
-                        </div>
-                    `;
-                    $('#content').append(contentHtml);
-                    console.log("Content appended");
+                    const audioPlayer = chunkDiv.querySelector('audio');
+                    audioPlayers.push(audioPlayer);
 
-                    // Scroll to the bottom of the content
-                    $('#content').scrollTop($('#content')[0].scrollHeight);
+                    audioPlayer.addEventListener('ended', function () {
+                        const currentIndex = audioPlayers.indexOf(this);
+                        if (currentIndex < audioPlayers.length - 1) {
+                            setTimeout(() => {
+                                audioPlayers[currentIndex + 1].play();
+                            }, 1000); // 1 second delay
+                        }
+                    });
                 };
 
-                eventSource.onerror = function (event) {
-                    console.error("EventSource failed:", event);
+                eventSource.onerror = function (error) {
+                    console.error('EventSource failed:', error);
                     eventSource.close();
+                    loadingMessage.hide(); // Hide loading message on error
                 };
+
+                eventSource.addEventListener('complete', function () {
+                    loadingMessage.hide(); // Hide loading message when processing is complete
+                });
             });
         });
     </script>
