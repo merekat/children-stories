@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Recording and Upload</title>
+</head>
+
+<body>
+    <h1>Audio Recording and Upload</h1>
+
+    <div id="recordingSection">
+        <h2>Record Audio</h2>
+        <p>Please read the following text:</p>
+        <p id="promptText">The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.</p>
+        <button id="startRecord">Start Recording</button>
+        <button id="stopRecord" disabled>Stop Recording</button>
+        <audio id="audioPlayback" controls style="display:none;"></audio>
+    </div>
+
+    <div id="uploadSection">
+        <h2>Upload Audio</h2>
+        <input type="file" id="audioFileInput" accept="audio/*">
+    </div>
+
+    <div id="saveSection" style="display:none;">
+        <h2>Save Audio</h2>
+        <input type="text" id="username" placeholder="Enter your username">
+        <button id="saveAudio">Save Audio</button>
+    </div>
+
+    <script>
+        document.addEventListener('submit', function (event) {
+            event.preventDefault();
+        });
+    </script>
+    <script src="../js/timeout.js"></script>
+</body>
+
+</html>
