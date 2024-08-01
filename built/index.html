@@ -31,7 +31,7 @@
             const startButton = $('#startButton');
             const content = $('#content');
             const loadingMessage = $('<span id="loadingMessage">Data processing ...</span>').hide();
-            startButton.after(loadingMessage); // Add loading message after the button
+            startButton.after(loadingMessage);
 
             let eventSource;
             let audioPlayers = [];
@@ -44,7 +44,7 @@
 
                 content.empty();
                 audioPlayers = [];
-                loadingMessage.show(); // Show loading message
+                loadingMessage.show();
 
                 eventSource = new EventSource('http://127.0.0.1:5000/process');
 
@@ -54,12 +54,12 @@
                     const chunkDiv = document.createElement('div');
                     chunkDiv.className = 'chunk';
                     chunkDiv.innerHTML = `
-                    <p>${data.text}</p>
-                    <audio controls>
-                        <source src="${data.audio}" type="audio/wav">
-                        Your browser does not support the audio element.
-                    </audio>
-                `;
+                <p>${data.text}</p>
+                <audio controls>
+                    <source src="http://127.0.0.1:5000${data.audio}" type="audio/wav">
+                    Your browser does not support the audio element.
+                </audio>
+            `;
                     content.append(chunkDiv);
 
                     const audioPlayer = chunkDiv.querySelector('audio');
@@ -70,19 +70,27 @@
                         if (currentIndex < audioPlayers.length - 1) {
                             setTimeout(() => {
                                 audioPlayers[currentIndex + 1].play();
-                            }, 1000); // 1 second delay
+                            }, 1000);
                         }
                     });
                 };
 
                 eventSource.onerror = function (error) {
-                    console.error('EventSource failed:', error);
+                    console.log('EventSource connection closed or encountered an error');
                     eventSource.close();
-                    loadingMessage.hide(); // Hide loading message on error
+                    loadingMessage.hide();
+                    // Only show an error message if no content was received
+                    if (content.children().length === 0) {
+                        content.append(
+                            '<p>An error occurred while processing the text. Please try again.</p>'
+                        );
+                    }
                 };
 
                 eventSource.addEventListener('complete', function () {
-                    loadingMessage.hide(); // Hide loading message when processing is complete
+                    console.log('Processing complete');
+                    eventSource.close();
+                    loadingMessage.hide();
                 });
             });
         });
