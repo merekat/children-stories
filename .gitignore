@@ -15,6 +15,7 @@
 **/.DS_Store
 **/.cache
 **/*.gguf
+**/*.wav
 
 #Igonre any directory named "models"
 **/models/*
