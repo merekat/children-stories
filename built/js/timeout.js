@@ -89,6 +89,7 @@ function saveAudio() {
         return;
     }
 
+
     formData.append('speaker', username); // Add this line to include the speaker name
 
     fetch('http://localhost:5001/save-audio', {
@@ -99,7 +100,9 @@ function saveAudio() {
         .then(data => {
             if (data.success) {
                 alert('Audio saved successfully. Training model...');
+
                 trainModel(username); // Pass username as the speaker name
+
             } else {
                 alert(`Error saving audio: ${data.error}`);
             }
@@ -110,7 +113,9 @@ function saveAudio() {
         });
 }
 
+
 function trainModel(speaker) {
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
 
@@ -120,7 +125,9 @@ function trainModel(speaker) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+
                 speaker: speaker // Changed from username to speaker
+
             }),
             signal: controller.signal
         })
