@@ -91,4 +91,4 @@ def handle_exception(e):
     return jsonify({'success': False, 'error': 'An unexpected error occurred'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001, use_reloader=False, threaded=False)
+    app.run(debug=True, port=5000, use_reloader=False, threaded=False)

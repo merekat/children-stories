@@ -1,4 +1,4 @@
-from flask import Flask, Response, send_from_directory, render_template, request, jsonify
+from flask import Flask, Response, send_from_directory, request, jsonify
 import torch
 from TTS.api import TTS
 import os
@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Initialize Flask app
 app = Flask(__name__, static_url_path='/built', static_folder=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-CORS(app, resources={r"/*": {"origins": "http://localhost:5500"}})
+CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins for simplicity
 
 app.config['DEBUG'] = False
 

@@ -42,8 +42,10 @@
             let eventSource;
             let audioPlayers = [];
 
+            const backendUrl = 'http://127.0.0.1:5000';
+
             // Load speaker options
-            $.getJSON('http://127.0.0.1:5000/speaker', function (data) {
+            $.getJSON(`${backendUrl}/speaker`, function (data) {
                 console.log("Received speaker data:", data);
                 if (data.speakers && data.speakers.length > 0) {
                     data.speakers.forEach(function (speaker) {
@@ -73,7 +75,7 @@
                 loadingMessage.show();
 
                 eventSource = new EventSource(
-                    `http://127.0.0.1:5000/process?speaker=${selectedSpeaker}`);
+                    `${backendUrl}/process?speaker=${selectedSpeaker}`);
 
 
                 eventSource.onmessage = function (event) {
@@ -84,7 +86,7 @@
                     chunkDiv.innerHTML = `
                 <p>${data.text}</p>
                 <audio controls>
-                    <source src="http://127.0.0.1:5000${data.audio}" type="audio/wav">
+                    <source src="${backendUrl}${data.audio}" type="audio/wav">
                     Your browser does not support the audio element.
                 </audio>
             `;
@@ -107,7 +109,6 @@
                     console.log('EventSource connection closed or encountered an error');
                     eventSource.close();
                     loadingMessage.hide();
-
 
                     if (content.children().length === 0) {
                         content.append(
