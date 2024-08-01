@@ -19,3 +19,7 @@
 #Igonre any directory named "models"
 **/models/*
 **/models/
+**/model/built/audio/*.wav
+built/static/audio/*.wav
+voice-cloning/inputs/*.wav
+voice-cloning/outputs/*.wav

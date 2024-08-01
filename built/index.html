@@ -22,6 +22,9 @@
 
 <body>
     <h1>Androcles and the Lion</h1>
+    <select id="speakerSelect">
+        <option value="">Select a speaker</option>
+    </select>
     <button id="startButton" type="button">Start Processing</button>
     <div id="content"></div>
 
@@ -30,14 +33,37 @@
         $(document).ready(function () {
             const startButton = $('#startButton');
             const content = $('#content');
+
+            const speakerSelect = $('#speakerSelect');
+
             const loadingMessage = $('<span id="loadingMessage">Data processing ...</span>').hide();
             startButton.after(loadingMessage);
 
             let eventSource;
             let audioPlayers = [];
 
+            // Load speaker options
+            $.getJSON('http://127.0.0.1:5000/speaker', function (data) {
+                console.log("Received speaker data:", data);
+                if (data.speakers && data.speakers.length > 0) {
+                    data.speakers.forEach(function (speaker) {
+                        speakerSelect.append($('<option></option>').val(speaker).text(speaker));
+                    });
+                } else {
+                    console.log("No speakers found in the data.");
+                }
+            }).fail(function (jqxhr, textStatus, error) {
+                console.log("Request Failed: " + textStatus + ", " + error);
+            });
+
             startButton.on('click', function (event) {
                 event.preventDefault();
+                const selectedSpeaker = speakerSelect.val();
+                if (!selectedSpeaker) {
+                    alert('Please select a speaker');
+                    return;
+                }
+
                 if (eventSource) {
                     eventSource.close();
                 }
@@ -46,7 +72,9 @@
                 audioPlayers = [];
                 loadingMessage.show();
 
-                eventSource = new EventSource('http://127.0.0.1:5000/process');
+                eventSource = new EventSource(
+                    `http://127.0.0.1:5000/process?speaker=${selectedSpeaker}`);
+
 
                 eventSource.onmessage = function (event) {
                     const data = JSON.parse(event.data);
@@ -79,7 +107,8 @@
                     console.log('EventSource connection closed or encountered an error');
                     eventSource.close();
                     loadingMessage.hide();
-                    // Only show an error message if no content was received
+
+
                     if (content.children().length === 0) {
                         content.append(
                             '<p>An error occurred while processing the text. Please try again.</p>'

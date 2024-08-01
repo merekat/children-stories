@@ -10,3 +10,9 @@ flask
 flask-cors
 flask-sse
 torch
+pydub
+torchaudio 
+soundfile 
+librosa
+chevron
+
