@@ -19,3 +19,4 @@
 #Igonre any directory named "models"
 **/models/*
 **/models/
+**/model/
