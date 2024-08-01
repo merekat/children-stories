@@ -1,12 +1,21 @@
 # Ignore all .log files
-*.log
+**/*.log
 
 # Ignore the build directory
-/built/model/
-/built/static/
-/built/audio/
+./built/model/
+./built/static/
+./built/audio/
 
 
 # Ignore a specific file
-.python-version
-/.venv/
+**/.python-version
+**/.venv
+**/.
+**/..
+**/.DS_Store
+**/.cache
+**/*.gguf
+
+#Igonre any directory named "models"
+**/models/*
+**/models/
