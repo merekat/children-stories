@@ -7,7 +7,8 @@ from flask_cors import CORS
 import json
 import html
 import sys
-import chevron  # You'll need to install this: pip install chevron
+import chevron  
+import subprocess
 
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -176,8 +177,6 @@ def process_text():
         yield "event: complete\ndata: {}\n\n"
 
     return Response(generate(), mimetype='text/event-stream')
-
-import subprocess
 
 @app.route('/generate_audio', methods=['POST'])
 def generate_audio():
