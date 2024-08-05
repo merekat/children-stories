@@ -1,21 +1,51 @@
 [
   {
     "title": "androcles_and_the_lion",
-    "speaker": "michel",
-    "language": "en"
-  },
-  {
-    "title": "androcles_and_the_lion",
     "speaker": "standard",
     "language": "en"
   },
   {
-    "title": "androcles_and_the_lion",
-    "speaker": "standard",
+    "title": "the_tiger_and_the_duck",
+    "speaker": "recorded",
     "language": "en"
   },
   {
-    "title": "androcles_and_the_lion",
+    "title": "the_dark_forest",
+    "speaker": "standard",
+    "language": "en"
+  },
+    {
+    "title": "the_brave_pony",
+    "speaker": "standard",
+    "language": "en"
+  },
+    {
+    "title": "the_litte_princess",
+    "speaker": "standard",
+    "language": "en"
+  },
+    {
+    "title": "the_mean_turtle",
+    "speaker": "standard",
+    "language": "en"
+  },  
+  {
+    "title": "moon_where_have_you_been",
+    "speaker": "standard",
+    "language": "en"
+  },  
+  {
+    "title": "the_fearless_princess_knight",
+    "speaker": "standard",
+    "language": "en"
+  },  
+  {
+    "title": "wolf_and_woof",
+    "speaker": "standard",
+    "language": "en"
+  },  
+  {
+    "title": "butterfly_and_bee",
     "speaker": "standard",
     "language": "en"
   }

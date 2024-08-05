@@ -102,8 +102,15 @@ def generate_story_html(title, chunks, audio_files, language):
         'story_json_path': '../../config/story.json',
         'language': language
     }
-    
-    return chevron.render(template, data)
+
+    # Generate the HTML content
+    story_html = chevron.render(template, data)
+
+    # Add the link to the external CSS file
+    css_link = '<link rel="stylesheet" type="text/css" href="/built/css/style_story.css">'
+    story_html = story_html.replace('</head>', f'{css_link}\n</head>')
+
+    return story_html
 
 @app.route('/')
 def index():
@@ -158,12 +165,25 @@ def process_text():
         if not isinstance(existing_data, list):
             existing_data = []
 
-        # Add new entry
-        existing_data.append(story)
+        # Check if the entry already exists
+        entry_exists = any(
+            entry.get("title") == story["title"] and
+            entry.get("speaker") == story["speaker"] and
+            entry.get("language") == story["language"]
+            for entry in existing_data
+        )
 
-        # Write updated data back to file
-        with open(story_json_path, 'w') as f:
-            json.dump(existing_data, f, indent=2)
+        # Add new entry only if it doesn't exist
+        if not entry_exists:
+            existing_data.append(story)
+
+            # Write updated data back to file
+            with open(story_json_path, 'w') as f:
+                json.dump(existing_data, f, indent=2)
+            
+            print(f"Added new entry to story.json: {story}")
+        else:
+            print(f"Entry already exists in story.json: {story}")
 
         # Generate story HTML file
         story_html = generate_story_html(TITLE.replace('_', ' ').title(), text_chunks, audio_files, LANGUAGE)
@@ -215,6 +235,10 @@ def serve_story(filename):
 @app.route('/built/config/<path:filename>')
 def serve_config(filename):
     return send_from_directory(os.path.join(app.root_path, '..', 'config'), filename)
+
+@app.route('/story')
+def story_page():
+    return send_from_directory(os.path.join(app.root_path, '..', 'built', 'content'), 'story.html')
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000, debug=True)
