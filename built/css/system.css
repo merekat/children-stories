@@ -13,6 +13,13 @@
     --text-base-size: 1rem;
     --text-scale-ratio: 1.2;
     --text-base-height: calc(1rem * 1.4);
+
+   --color-first-h: 228;
+   --color-first-s: 100%;
+   --color-first-l: 68%;
+   --color-second-h: 138;
+   --color-second-s: 26%;
+   --color-second-l: 60%;
 }
 
 body {

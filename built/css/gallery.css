@@ -1,8 +1,10 @@
 body#gallery {
-    grid-template-rows: var(--height-header) auto; 
+    display: grid;
+    grid-template-rows: var(--height-header) auto auto auto 100px; /* Define rows including the footer */
+    min-height: 100vh; /* Ensure the grid spans the full viewport height */
     font-family: Arial, sans-serif;
     margin: 0;
-    padding: 0 var(--body-padding) var(--body-padding) var(--body-padding);
+    padding: 0 var(--body-padding) 0 var(--body-padding); /* Remove bottom padding */
     background: radial-gradient(circle at center, 
         #f9eac7, 
         #f7e3b3,
@@ -160,14 +162,65 @@ body#gallery {
     }
 }
 
+.story-generator-box {
+    grid-column: 1 / -1; /* Span full width */
+    grid-row: 2; /* Place in the second row */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    margin: 20px auto;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 1200px;
+    width: calc(100% - 2 * var(--body-padding));
+}
+
+.generate-story-btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: var(--color-first);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.generate-story-btn:hover {
+    background-color: var(--color-first-dark-1);
+}
+
+.generate-story-explanation {
+    flex: 1;
+    margin-left: 20px;
+    font-size: 14px;
+    color: #333;
+}
+
+@media screen and (max-width: 768px) {
+    .story-generator-box {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .generate-story-btn {
+        margin-bottom: 15px;
+    }
+
+    .generate-story-explanation {
+        margin-left: 0;
+    }
+}
+
 .gallery-container {
     grid-column: 1 / -1; 
-    grid-row: 2; 
+    grid-row: 3; /* Place in the third row */
     display: grid;
     grid-template-columns: repeat(1, minmax(250px, 1fr)); 
     gap: var(--gap);
     padding: var(--body-padding);
-    margin-top: calc(3 * var(--body-padding));
 }
 
 @media screen and (min-width: 600px) {
@@ -186,6 +239,7 @@ body#gallery {
         margin-right: auto;
     }
 }
+
 
 .story {
     position: relative;
@@ -213,17 +267,17 @@ body#gallery {
 }
 
 .button-container {
+    grid-column: 1 / -1; /* Span full width */
+    grid-row: 4; /* Place in the fourth row */
     display: flex;
     justify-content: center;
-    padding: 100px;
-    width: calc(100vw - 2 * var(--body-padding));
+    padding: 20px;
 }
 
 .load-more {
     height: 50px;
     line-height: calc(50px - 16px);
     padding: 10px 20px;
-    margin-top: -50px;
     font-size: 16px;
     cursor: pointer;
     background-color: #333;
@@ -234,4 +288,55 @@ body#gallery {
 
 .load-more:hover {
     background-color: #555;
+}
+
+.footer {
+    grid-column: 1 / -1; /* Span full width */
+    grid-row: 5; /* Place in the fifth row */
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 25px 25px 0 0;
+    height: 100px; /* Set fixed height */
+    padding: 20px; /* Optional: adjust padding as needed */
+    box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
+    width: 100%; /* Ensure it spans the full width */
+    align-self: end; /* Align the footer to the bottom */
+}
+
+@media screen and (min-width: 600px) {
+    .footer {
+        grid-template-columns: repeat(2, minmax(250px, 1fr));
+    }
+}
+
+@media screen and (min-width: 1200px) {
+    .footer {
+        grid-template-columns: repeat(3, minmax(250px, 1fr));
+        background-position: center bottom;
+        width: 1200px;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+.footer-content {
+    max-width: 1200px; /* Optional: limit the width */
+    margin: 0 auto; /* Center the content */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center items */
+    text-align: center; /* Center text */
+    height: 100%; /* Ensure content takes full height */
+    justify-content: center; /* Center content vertically */
+}
+
+.footer-nav a {
+    margin: 0 15px; /* Space between links */
+    text-decoration: none;
+    color: #333; /* Link color */
+    font-weight: bold; /* Bold links */
+}
+
+.footer-nav a:hover {
+    text-decoration: underline; /* Underline on hover */
 }
