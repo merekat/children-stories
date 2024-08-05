@@ -15,7 +15,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Initialize Flask app
 app = Flask(__name__, static_url_path='/built', static_folder=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins for simplicity
+CORS(app, resources={r"/*": {"origins": "*"}}) 
 
 app.config['DEBUG'] = False
 
