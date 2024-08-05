@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.DEBUG)
 def update_speaker_config(speaker):
     config_path = os.path.join(app.root_path, '..', 'config', 'speaker.json')
     os.makedirs(os.path.dirname(config_path), exist_ok=True)
-    
+
     if os.path.exists(config_path):
         with open(config_path, 'r') as f:
             config = json.load(f)
@@ -40,22 +40,22 @@ def save_audio():
     try:
         if 'audio' not in request.files:
             return jsonify({'success': False, 'error': 'No audio file'}), 400
-        
+
         audio_file = request.files['audio']
         speaker = request.form.get('speaker', 'unknown_user')
-        
+
         if not speaker:
             return jsonify({'success': False, 'error': 'Invalid speaker'}), 400
 
         audio_dir = os.path.join(app.root_path, '..', 'audio')
         os.makedirs(audio_dir, exist_ok=True)
         audio_path = os.path.join(audio_dir, f'{speaker}.wav')
-        
+
         logging.debug(f"Attempting to save audio to: {audio_path}")
-        
+
         # Save the raw audio data
         audio_file.save(audio_path)
-        
+
         # Use FFmpeg to convert the audio to a valid WAV format
         try:
             ffmpeg_command = [
@@ -71,7 +71,7 @@ def save_audio():
             if result.returncode != 0:
                 logging.error(f"FFmpeg error: {result.stderr}")
                 return jsonify({'success': False, 'error': f'Error converting audio: {result.stderr}'}), 500
-            
+
             # Replace the original file with the converted one
             os.replace(f'{audio_path}.converted.wav', audio_path)
         except Exception as e:
@@ -80,17 +80,17 @@ def save_audio():
 
         file_size = os.path.getsize(audio_path)
         logging.debug(f"Audio saved and converted successfully! File size: {file_size} bytes")
-        
+
         # Check if the file is not empty
         if file_size == 0:
             os.remove(audio_path)
             return jsonify({'success': False, 'error': 'Saved audio file is empty'}), 400
-        
+
         # Update speaker.json
         update_speaker_config(speaker)
-        
+
         return jsonify({'success': True, 'message': f'Audio saved as {audio_path}'})
-    
+
     except Exception as e:
         logging.error(f"Error saving audio: {e}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -109,8 +109,6 @@ def train_model_task(speaker):
     logging.debug(f"Training model with audio: {audio_path}")
 
     try:
-        # Add your training code here
-        # Example: tts.train(audio_path)
 
         model_dir = os.path.join(app.root_path, '..', 'model')
         os.makedirs(model_dir, exist_ok=True)
@@ -131,7 +129,7 @@ def train_model():
         data = request.json
         if not data:
             return jsonify({'success': False, 'error': 'No JSON data provided'}), 400
-        
+
         speaker = data.get('speaker')
         if not speaker:
             return jsonify({'success': False, 'error': 'No speaker provided'}), 400
@@ -152,4 +150,4 @@ def handle_exception(e):
     return jsonify({'success': False, 'error': 'An unexpected error occurred'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000, use_reloader=False, threaded=False)
+    app.run(debug=True, port=5001, use_reloader=False, threaded=False)

@@ -14,25 +14,27 @@ ChildGPT is an innovative application that creates custom children's stories bas
 1. **Clone the Repository**
 
    ```bash
+   git clone git@github.com:merekat/children-stories.git
+2. **Activate the Environment**
+
+   ```bash
    python -m venv venv
    source venv/bin/activate
-2. **Install Dependencies**
+3. **Install Dependencies**
 
    ```bash
     pip install -r requirements.txt
-3. **Clone the Repository**
 
-   ```bash
-   pip clone git@github.com:merekat/children-stories.git
 4. **Download and Prepare Models**
 *   Ensure you have the TTS models and other necessary files in the built/model directory.
 *   Place the input audio file in built/audio.
 
 ## Usage
 
-1. **Run the Flask Application**
+1. **Run the Flask Application in seperate Consoles**
    ```bash
-   python built/generation.py  
+   python built/scripts/generation.py  
+   python built/scripts/training.py
 2. **Access the Web Interface**
 
 *   Open your browser and navigate to http://localhost:5000.
