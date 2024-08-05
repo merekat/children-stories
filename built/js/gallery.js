@@ -3,6 +3,9 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(response => response.json())
         .then(data => {
             const container = document.getElementById('gallery-container');
+            const loadMoreButton = document.getElementById('load-more');
+            let currentIndex = 0;
+            const batchSize = 6;
 
             // Function to shuffle the array
             function shuffleArray(array) {
@@ -14,36 +17,52 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Shuffle the data array
-            const shuffledData = shuffleArray([...data]); // Create a copy before shuffling
-            console.log('Shuffled Stories:', shuffledData); // Debugging line
+            const shuffledData = shuffleArray([...data]);
 
-            shuffledData.forEach(story => {
-                const storyLink = document.createElement('a');
-                const storyDiv = document.createElement('div');
-                storyDiv.className = 'story';
+            // Function to load a batch of stories
+            function loadStories() {
+                const nextBatch = shuffledData.slice(currentIndex, currentIndex + batchSize);
+                nextBatch.forEach(story => {
+                    const storyLink = document.createElement('a');
+                    const storyDiv = document.createElement('div');
+                    storyDiv.className = 'story';
 
-                const title = story.title.replace(/_/g, ' ').toLowerCase();
-                const formattedTitle = title.charAt(0).toUpperCase() + title.slice(1);
-                const imgSrc = `/built/static/image/${story.title}_cover.png`;
-                const defaultImgSrc = '/built/static/image/standard_cover.png';
+                    const title = story.title.replace(/_/g, ' ').toLowerCase();
+                    const formattedTitle = title.charAt(0).toUpperCase() + title.slice(1);
+                    const imgSrc = `/built/static/image/${story.title}_cover.png`;
+                    const defaultImgSrc = '/built/static/image/standard_cover.png';
 
-                const img = new Image();
-                img.onload = function () {
-                    storyDiv.style.backgroundImage = `url('${imgSrc}')`;
-                };
-                img.onerror = function () {
-                    storyDiv.style.backgroundImage = `url('${defaultImgSrc}')`;
-                };
-                img.src = imgSrc;
+                    const img = new Image();
+                    img.onload = function () {
+                        storyDiv.style.backgroundImage = `url('${imgSrc}')`;
+                    };
+                    img.onerror = function () {
+                        storyDiv.style.backgroundImage = `url('${defaultImgSrc}')`;
+                    };
+                    img.src = imgSrc;
 
-                const titleSpan = document.createElement('span');
-                titleSpan.textContent = formattedTitle;
+                    const titleSpan = document.createElement('span');
+                    titleSpan.textContent = formattedTitle;
 
-                storyDiv.appendChild(titleSpan);
-                storyLink.appendChild(storyDiv);
-                storyLink.href = `/built/static/story/${story.title}.html`;
-                container.appendChild(storyLink);
-            });
+                    storyDiv.appendChild(titleSpan);
+                    storyLink.appendChild(storyDiv);
+                    storyLink.href = `/built/static/story/${story.title}.html`;
+                    container.appendChild(storyLink);
+                });
+
+                currentIndex += batchSize;
+
+                // Hide the load more button if all stories are loaded
+                if (currentIndex >= shuffledData.length) {
+                    loadMoreButton.style.display = 'none';
+                }
+            }
+
+            // Initial load
+            loadStories();
+
+            // Load more stories on button click
+            loadMoreButton.addEventListener('click', loadStories);
         })
         .catch(error => console.error('Error loading stories:', error));
 });

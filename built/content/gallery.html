@@ -5,11 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stories</title>
+    <link rel="stylesheet" type="text/css" href="/built/css/normalize.css">
+    <link rel="stylesheet" type="text/css" href="/built/css/system.css">
     <link rel="stylesheet" type="text/css" href="/built/css/gallery.css">
 </head>
 
-<body id="gallery">
+<body id="gallery" class="grid">
+
+    <header class="header-container shadow-3">
+        <div class="title">
+            <h1><span>Stories</span><br>Explore</h1>
+        </div>
+    </header>
     <div id="gallery-container" class="gallery-container"></div>
+    <div class="button-container">
+        <button id="load-more" class="load-more">Load More</button>
+    </div>
 
     <script src="/built/js/gallery.js"></script>
 </body>
