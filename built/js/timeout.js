@@ -91,7 +91,7 @@ function saveAudio() {
 
     formData.append('speaker', username); // Add this line to include the speaker name
 
-    fetch('http://localhost:5001/save-audio', {
+    fetch('http://localhost:5000/save-audio', {
             method: 'POST',
             body: formData
         })
@@ -114,7 +114,7 @@ function trainModel(speaker) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
 
-    fetch('http://localhost:5001/train-model', {
+    fetch('http://localhost:5000/train-model', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
