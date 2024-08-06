@@ -9,15 +9,19 @@ def text_generation(topic = "happy animals", age_range = "3 and 6", word_count =
         os.mkdir(model_directory)
 
     # Model settings
-    model_name = "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf"
+    original_model_name = "Meta-Llama-3.1-8B-Instruct.Q4_K_M.gguf"
+    model_name = "textgen.gguf"  
     repo_id = "QuantFactory/Meta-Llama-3.1-8B-Instruct-GGUF"
 
     # Pull model from hugging face 
     if not os.path.exists(model_directory + model_name):
         llm = Llama.from_pretrained(
-            repo_id=repo_id, \
-            filename=model_name, \
-            local_dir = model_directory)
+            repo_id=repo_id,
+            filename=original_model_name,
+            local_dir=model_directory)
+        
+        # Rename the downloaded model to "textgen.gguf"
+        os.rename(model_directory + original_model_name, model_directory + model_name)
 
     # Load model
     llm = Llama(model_path=model_directory + model_name,
@@ -48,3 +52,8 @@ def text_generation(topic = "happy animals", age_range = "3 and 6", word_count =
     text_gen = output["choices"][0]['message']['content']
 
     return text_gen
+
+if __name__ == "__main__":
+    # Example usage
+    story = text_generation(topic="happy animals", age_range="3 and 6", word_count=200)
+    print(story)
