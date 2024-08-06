@@ -14,36 +14,36 @@
     "speaker": "standard",
     "language": "en"
   },
-    {
+  {
     "title": "the_brave_pony",
     "speaker": "standard",
     "language": "en"
   },
-    {
+  {
     "title": "the_litte_princess",
     "speaker": "standard",
     "language": "en"
   },
-    {
+  {
     "title": "the_mean_turtle",
     "speaker": "standard",
     "language": "en"
-  },  
+  },
   {
     "title": "moon_where_have_you_been",
     "speaker": "standard",
     "language": "en"
-  },  
+  },
   {
     "title": "the_fearless_princess_knight",
     "speaker": "standard",
     "language": "en"
-  },  
+  },
   {
     "title": "wolf_and_woof",
     "speaker": "standard",
     "language": "en"
-  },  
+  },
   {
     "title": "butterfly_and_bee",
     "speaker": "standard",
@@ -52,6 +52,11 @@
   {
     "title": "gruzzle_made_a_mistake",
     "speaker": "standard",
+    "language": "en"
+  },
+  {
+    "title": "androcles_and_the_lion",
+    "speaker": "michel",
     "language": "en"
   }
 ]
