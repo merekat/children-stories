@@ -35,13 +35,16 @@
             font-weight: bold;
         }
     </style>
+    <link rel="stylesheet" type="text/css" href="/built/css/style_story.css">
 </head>
 
 <body>
     <h1>{{title}}</h1>
     <label for="existingSpeakers">Select Existing Speaker:</label>
     <select id="existingSpeakers" name="existingSpeakers">
-        <!-- Options will be populated by JavaScript -->
+        {{#existing_speakers}}
+        <option value="{{.}}">{{.}}</option>
+        {{/existing_speakers}}
     </select>
 
     <br>
@@ -49,7 +52,9 @@
     <label for="allSpeakers">Select New Speaker:</label>
     <select id="allSpeakers" name="allSpeakers">
         <option value="">Select a new speaker</option>
-        <!-- Options will be populated by JavaScript -->
+        {{#all_speakers}}
+        <option value="{{.}}">{{.}}</option>
+        {{/all_speakers}}
     </select>
 
     <br>
@@ -57,15 +62,20 @@
     <button id="generateButton" disabled>Generate Audio for New Speaker</button>
     <div id="generationStatus"></div>
 
-    {{#chunks}}
-    <div class="chunk">
-        <p>{{text}}</p>
-        <audio controls id="audio-{{index}}" data-index="{{index}}">
-            <source src="{{audio}}" type="audio/wav">
-            Your browser does not support the audio element.
-        </audio>
+    <div id="audioChunks">
+        {{#chunks}}
+        <div class="chunk" data-index="{{index}}">
+            <p>{{text}}</p>
+            <audio controls id="audio-{{index}}" data-index="{{index}}">
+                <source src="{{audio}}" type="audio/wav">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+        {{/chunks}}
     </div>
-    {{/chunks}}
+
+    <div id="speakerData" data-existing-speakers='{{existing_speakers_json}}' data-all-speakers='{{all_speakers_json}}'>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -76,15 +86,35 @@
             const generationStatus = document.getElementById('generationStatus');
             const language = "{{language}}";
 
-            function updateAudioSources(speaker) {
+            const speakerData = document.getElementById('speakerData');
+            const existingSpeakersJson = speakerData.getAttribute('data-existing-speakers');
+            const allSpeakersJson = speakerData.getAttribute('data-all-speakers');
+
+            let existingSpeakers, allSpeakers;
+            try {
+                existingSpeakers = JSON.parse(existingSpeakersJson);
+                allSpeakers = JSON.parse(allSpeakersJson);
+            } catch (error) {
+                console.error("Error parsing JSON:", error);
+                existingSpeakers = [];
+                allSpeakers = [];
+            }
+
+            function updateAudioSources(speaker, audioFiles = null) {
                 const audioElements = document.querySelectorAll('audio');
-                audioElements.forEach(audio => {
-                    const index = audio.dataset.index;
+                audioElements.forEach((audio, index) => {
+                    const audioIndex = audio.dataset.index;
                     let newSrc;
-                    if (speaker === "standard") {
-                        newSrc = `/built/static/audio/standard_${language}_${title}_${index}.wav`;
+                    if (audioFiles) {
+                        newSrc = audioFiles[index].audio;
                     } else {
-                        newSrc = `/built/static/audio/${speaker}_${language}_${title}_${index}.wav`;
+                        if (speaker === "standard") {
+                            newSrc =
+                                `/built/static/audio/standard_${language}_${title}_${audioIndex}.wav`;
+                        } else {
+                            newSrc =
+                                `/built/static/audio/${speaker}_${language}_${title}_${audioIndex}.wav`;
+                        }
                     }
                     audio.querySelector('source').src = newSrc;
                     audio.load();
@@ -113,29 +143,13 @@
                 });
             }
 
-            Promise.all([
-                fetch('{{story_json_path}}').then(response => response.json()),
-                fetch('../../config/speaker.json').then(response => response.json())
-            ]).then(([storyData, speakerData]) => {
-                if (Array.isArray(storyData) && Array.isArray(speakerData.speakers)) {
-                    const relevantEntries = storyData.filter(entry => entry.title === title);
-                    const existingSpeakers = [...new Set(relevantEntries.map(entry => entry.speaker))];
-                    const allSpeakers = speakerData.speakers;
+            populateExistingSpeakers(existingSpeakers);
+            populateAllSpeakers(allSpeakers, existingSpeakers);
 
-                    populateExistingSpeakers(existingSpeakers);
-                    populateAllSpeakers(allSpeakers, existingSpeakers);
-
-                    if (existingSpeakers.length > 0) {
-                        existingSpeakersSelect.value = existingSpeakers[0];
-                        updateAudioSources(existingSpeakers[0]);
-                    }
-                } else {
-                    console.error('Invalid data structure in JSON files:', {
-                        storyData,
-                        speakerData
-                    });
-                }
-            }).catch(error => console.error('Error loading data:', error));
+            if (existingSpeakers.length > 0) {
+                existingSpeakersSelect.value = existingSpeakers[0];
+                updateAudioSources(existingSpeakers[0]);
+            }
 
             existingSpeakersSelect.addEventListener('change', function () {
                 updateAudioSources(this.value);
@@ -157,7 +171,7 @@
                     .map(p => p.textContent)
                     .join(' ');
 
-                fetch('http://127.0.0.1:5000/generate_audio', {
+                fetch('http://localhost:5000/generate_audio', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -171,17 +185,22 @@
                     })
                     .then(response => {
                         if (!response.ok) {
-                            return response.json().then(err => {
-                                throw err;
-                            });
+                            throw new Error(`HTTP error! status: ${response.status}`);
                         }
                         return response.json();
                     })
                     .then(data => {
                         if (data.success) {
                             generationStatus.textContent = "Audio generated successfully!";
-                            // Refresh the page or update the UI as needed
-                            location.reload();
+                            // Update audio sources with new files
+                            updateAudioSources(speaker, data.audio_files);
+                            // Lock the new speaker in the first select input
+                            existingSpeakers.push(speaker);
+                            populateExistingSpeakers(existingSpeakers);
+                            existingSpeakersSelect.value = speaker;
+                            // Reduce the available speakers in the second input
+                            allSpeakers = allSpeakers.filter(s => s !== speaker);
+                            populateAllSpeakers(allSpeakers, existingSpeakers);
                         } else {
                             generationStatus.textContent = "Error generating audio: " + data
                                 .message;
@@ -190,8 +209,7 @@
                     .catch(error => {
                         console.error('Error:', error);
                         generationStatus.textContent =
-                            "An error occurred while generating audio: " + (error.message ||
-                                "Unknown error");
+                            "An error occurred while generating audio: " + error.message;
                     })
                     .finally(() => {
                         generateButton.disabled = false;

@@ -1,17 +1,17 @@
 from flask import Flask, Response, send_from_directory, request, jsonify
 import torch
 from TTS.api import TTS
+from TTS.utils.manage import ModelManager
 import os
 import re
 from flask_cors import CORS
 import json
 import html
 import sys
-import chevron  
+import chevron
 import subprocess
 import logging
 from threading import Thread
-from TTS.utils.manage import ModelManager
 
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -37,32 +37,33 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 model_name = 'tts_models/multilingual/multi-dataset/xtts_v2'
 
 # Initialize the TTS model with the pre-trained XTTS v2
+tts = TTS(model_name=model_name, progress_bar=False, gpu=torch.cuda.is_available())
+
+
+# Initialize the TTS model with the pre-trained XTTS v2
 tts = TTS(model_name).to(device)
-
-# Load speaker-specific model or fall back to standard model
-speaker_model_path = os.path.join(app.root_path, '..', 'model', f'{SPEAKER}.pth')
-standard_model_path = os.path.join(app.root_path, '..', 'model', 'standard.pth')
-
-if os.path.exists(speaker_model_path):
-    try:
-        tts.load_model_weights(speaker_model_path)
-        print(f"Loaded speaker-specific weights: {speaker_model_path}")
-    except Exception as e:
-        print(f"Failed to load speaker-specific weights: {e}")
-elif os.path.exists(standard_model_path):
-    try:
-        tts.load_model_weights(standard_model_path)
-        print(f"Loaded standard weights: {standard_model_path}")
-    except Exception as e:
-        print(f"Failed to load standard weights: {e}")
-else:
-    print(f"Using the default XTTS model weights.")
 
 # Ensure the necessary directories exist
 os.makedirs(os.path.join(app.root_path, '..', 'static', 'audio'), exist_ok=True)
 os.makedirs(os.path.join(app.root_path, '..', 'config'), exist_ok=True)
 os.makedirs(os.path.join(app.root_path, '..', 'static', 'story'), exist_ok=True)
 os.makedirs(os.path.join(app.root_path, '..', 'model'), exist_ok=True)
+
+def load_speaker_model(speaker):
+    try:
+        speaker_wav_path = os.path.join(app.root_path, '..', 'audio', f'{speaker}.wav')
+        if os.path.exists(speaker_wav_path):
+            global tts
+            tts = TTS(model_name=model_name, progress_bar=False, gpu=torch.cuda.is_available())
+            app.logger.info(f"Loaded base TTS model for speaker: {speaker}")
+            return True
+        else:
+            app.logger.error(f"Speaker audio file does not exist: {speaker_wav_path}")
+    except Exception as e:
+        app.logger.error(f"Failed to initialize TTS model: {e}", exc_info=True)
+    return False
+
+
 
 @app.route('/speaker')
 def speaker():
@@ -73,7 +74,6 @@ def speaker():
         return jsonify(config)
     else:
         return jsonify({"speakers": []})
-
 
 def split_text(text, max_chars=250, max_sentences=5):
     sentences = re.split(r'(?<=[.!?])\s+', text)
@@ -99,6 +99,30 @@ def generate_story_html(title, chunks, audio_files, language):
     with open(template_path, 'r', encoding='utf-8') as template_file:
         template = template_file.read()
     
+    # Get all speakers and languages for this story
+    story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
+    speaker_json_path = os.path.join(app.root_path, '..', 'config', 'speaker.json')
+    
+    with open(story_json_path, 'r') as f:
+        story_data = json.load(f)
+    
+    with open(speaker_json_path, 'r') as f:
+        all_speakers = json.load(f).get('speakers', [])
+    
+    story_entry = next((item for item in story_data if item["title"] == title.lower().replace(' ', '_')), None)
+    existing_speakers = story_entry["speaker"] if story_entry else []
+    languages = story_entry["language"] if story_entry else []
+
+      # Ensure existing_speakers is a list
+    if isinstance(existing_speakers, str):
+        existing_speakers = [existing_speakers]
+
+    # Convert to JSON and print for debugging
+    existing_speakers_json = json.dumps(existing_speakers)
+    all_speakers_json = json.dumps(all_speakers)
+    print("Existing Speakers JSON:", existing_speakers_json)
+    print("All Speakers JSON:", all_speakers_json)
+
     data = {
         'title': html.escape(title),
         'chunks': [
@@ -106,17 +130,17 @@ def generate_story_html(title, chunks, audio_files, language):
             for i, (chunk, audio_file) in enumerate(zip(chunks, audio_files))
         ],
         'story_json_path': '../../config/story.json',
-        'language': language
+        'language': language,
+        'existing_speakers_json': existing_speakers_json,
+        'all_speakers_json': all_speakers_json,
+        'languages': languages
     }
 
     # Generate the HTML content
     story_html = chevron.render(template, data)
 
-    # Add the link to the external CSS file
-    css_link = '<link rel="stylesheet" type="text/css" href="/built/css/style_story.css">'
-    story_html = story_html.replace('</head>', f'{css_link}\n</head>')
-
     return story_html
+
 
 @app.route('/')
 def index():
@@ -152,44 +176,30 @@ def process_text():
 
         # Update story JSON file
         story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
-        story = {
-            "title": TITLE,
-            "speaker": speaker if speaker else "default",
-            "language": LANGUAGE
-        }
-
-        # Read existing data
-        existing_data = []
+        
         if os.path.exists(story_json_path):
             with open(story_json_path, 'r') as f:
-                try:
-                    existing_data = json.load(f)
-                except json.JSONDecodeError:
-                    print("Error reading existing JSON. Starting with empty list.")
-
-        # Ensure existing_data is a list
-        if not isinstance(existing_data, list):
-            existing_data = []
-
-        # Check if the entry already exists
-        entry_exists = any(
-            entry.get("title") == story["title"] and
-            entry.get("speaker") == story["speaker"] and
-            entry.get("language") == story["language"]
-            for entry in existing_data
-        )
-
-        # Add new entry only if it doesn't exist
-        if not entry_exists:
-            existing_data.append(story)
-
-            # Write updated data back to file
-            with open(story_json_path, 'w') as f:
-                json.dump(existing_data, f, indent=2)
-            
-            print(f"Added new entry to story.json: {story}")
+                story_data = json.load(f)
         else:
-            print(f"Entry already exists in story.json: {story}")
+            story_data = []
+
+        # Find existing entry or create new one
+        existing_entry = next((item for item in story_data if item["title"] == TITLE), None)
+        if existing_entry:
+            if speaker and speaker not in existing_entry["speaker"]:
+                existing_entry["speaker"].append(speaker)
+            if LANGUAGE not in existing_entry["language"]:
+                existing_entry["language"].append(LANGUAGE)
+        else:
+            new_entry = {
+                "title": TITLE,
+                "speaker": [speaker] if speaker else [],
+                "language": [LANGUAGE]
+            }
+            story_data.append(new_entry)
+
+        with open(story_json_path, 'w') as f:
+            json.dump(story_data, f, indent=2)
 
         # Generate story HTML file
         story_html = generate_story_html(TITLE.replace('_', ' ').title(), text_chunks, audio_files, LANGUAGE)
@@ -204,31 +214,139 @@ def process_text():
 
     return Response(generate(), mimetype='text/event-stream')
 
+
+def generate_audio_for_speaker(speaker, language, title, text):
+    try:
+        if not load_speaker_model(speaker):
+            app.logger.error(f"Failed to load TTS model for speaker: {speaker}")
+            return False
+
+        chunks = text.split('. ')
+        audio_files = []
+        speaker_wav = os.path.join(app.root_path, '..', 'audio', f'{speaker}.wav')
+        
+        for i, chunk in enumerate(chunks):
+            audio_filename = f"{speaker}_{language}_{title}_{i+1}.wav"
+            audio_path = os.path.join(app.root_path, '..', 'static', 'audio', audio_filename)
+
+            tts.tts_to_file(text=chunk,
+                            file_path=audio_path,
+                            speaker_wav=speaker_wav,
+                            language=language)
+
+            audio_files.append(f"/built/static/audio/{audio_filename}")
+
+        # Update story.json
+        story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
+        if os.path.exists(story_json_path):
+            with open(story_json_path, 'r') as f:
+                story_data = json.load(f)
+        else:
+            story_data = []
+
+        # Find existing entry or create new one
+        existing_entry = next((item for item in story_data if item["title"] == title), None)
+        if existing_entry:
+            if speaker not in existing_entry["speaker"]:
+                existing_entry["speaker"].append(speaker)
+            if language not in existing_entry["language"]:
+                existing_entry["language"].append(language)
+        else:
+            new_entry = {
+                "title": title,
+                "speaker": [speaker],
+                "language": [language]
+            }
+            story_data.append(new_entry)
+
+        with open(story_json_path, 'w') as f:
+            json.dump(story_data, f, indent=2)
+
+        app.logger.info(f"Successfully generated audio for speaker: {speaker}")
+        return True
+    except Exception as e:
+        app.logger.error(f"Error in generate_audio_for_speaker: {str(e)}", exc_info=True)
+        return False
+
+
+
+
 @app.route('/generate_audio', methods=['POST'])
 def generate_audio():
     try:
         data = request.json
+        app.logger.debug(f"Received data: {data}")
         speaker = data['speaker']
         language = data['language']
         title = data['title']
         text = data['text']
 
-        # Correct path construction
-        script_path = os.path.join(os.path.dirname(__file__), 'regeneration.py')
-        script_path = os.path.abspath(script_path)
-        
-        print(f"Attempting to run script at: {script_path}")  # Debug print
+        app.logger.debug(f"Attempting to generate audio for speaker: {speaker}")
+        success, audio_files = generate_audio_for_speaker(speaker, language, title, text)
 
-        result = subprocess.run([sys.executable, script_path, speaker, language, title, text], 
-                                capture_output=True, text=True)
-
-        if result.returncode == 0:
-            return jsonify({"success": True, "message": "Audio generated successfully"}), 200
+        if success:
+            app.logger.info(f"Audio generated successfully for speaker: {speaker}")
+            return jsonify({"success": True, "message": "Audio generated successfully", "audio_files": audio_files}), 200
         else:
-            return jsonify({"success": False, "message": f"Error in regeneration.py: {result.stderr}"}), 500
+            app.logger.error(f"Failed to generate audio for speaker: {speaker}")
+            return jsonify({"success": False, "message": "Failed to generate audio"}), 500
     except Exception as e:
-        app.logger.error(f"Error in generate_audio: {str(e)}")
+        app.logger.error(f"Error in generate_audio: {str(e)}", exc_info=True)
         return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500
+
+def generate_audio_for_speaker(speaker, language, title, text):
+    try:
+        if not load_speaker_model(speaker):
+            app.logger.error(f"Failed to load TTS model for speaker: {speaker}")
+            return False, []
+
+        chunks = text.split('. ')
+        audio_files = []
+        speaker_wav = os.path.join(app.root_path, '..', 'audio', f'{speaker}.wav')
+        
+        for i, chunk in enumerate(chunks):
+            audio_filename = f"{speaker}_{language}_{title}_{i+1}.wav"
+            audio_path = os.path.join(app.root_path, '..', 'static', 'audio', audio_filename)
+
+            tts.tts_to_file(text=chunk,
+                            file_path=audio_path,
+                            speaker_wav=speaker_wav,
+                            language=language)
+
+            audio_files.append({"text": chunk, "audio": f"/built/static/audio/{audio_filename}"})
+
+        # Update story.json
+        story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
+        if os.path.exists(story_json_path):
+            with open(story_json_path, 'r') as f:
+                story_data = json.load(f)
+        else:
+            story_data = []
+
+        # Find existing entry or create new one
+        existing_entry = next((item for item in story_data if item["title"] == title), None)
+        if existing_entry:
+            if speaker not in existing_entry["speaker"]:
+                existing_entry["speaker"].append(speaker)
+            if language not in existing_entry["language"]:
+                existing_entry["language"].append(language)
+        else:
+            new_entry = {
+                "title": title,
+                "speaker": [speaker],
+                "language": [language]
+            }
+            story_data.append(new_entry)
+
+        with open(story_json_path, 'w') as f:
+            json.dump(story_data, f, indent=2)
+
+        app.logger.info(f"Successfully generated audio for speaker: {speaker}")
+        return True, audio_files
+    except Exception as e:
+        app.logger.error(f"Error in generate_audio_for_speaker: {str(e)}", exc_info=True)
+        return False, []
+
 
 @app.route('/built/static/audio/<path:filename>')
 def serve_audio(filename):
@@ -339,7 +457,6 @@ def train_model_task(speaker):
     logging.debug(f"Training model with audio: {audio_path}")
 
     try:
-
         model_dir = os.path.join(app.root_path, '..', 'model')
         os.makedirs(model_dir, exist_ok=True)
         model_path = os.path.join(model_dir, f'{speaker}.pth')
