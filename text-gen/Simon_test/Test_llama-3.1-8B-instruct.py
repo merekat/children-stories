@@ -75,7 +75,7 @@ def text_generation(topic = "happy animals", age_range = "3 and 6", word_count =
 
     output = llm.create_chat_completion( messages = [
             {"role": "system", "content": "You are a story writing assistant."},
-            {"role": "user", "content": prompt1}
+            {"role": "user", "content": prompt}
             ])
 
     """
