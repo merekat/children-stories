@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.DEBUG)
 # Define speaker, language, and title
 SPEAKER = ''.lower().replace(' ', '_')
 LANGUAGE = 'en'.lower().replace(' ', '_')
-TITLE = 'Androcles and the Lion'.lower().replace(' ', '_')
+TITLE = 'Androcles and the Lion'
 
 # Generated text
 TEXT = "Once upon a time, in a small village nestled at the edge of a dense and mysterious forest, there lived a little girl named Lily. The villagers called her 'Forest Child' because she spent most of her days exploring the woods, collecting wildflowers, and watching the animals that roamed freely within its boundaries."
@@ -109,11 +109,11 @@ def generate_story_html(title, chunks, audio_files, language):
     with open(speaker_json_path, 'r') as f:
         all_speakers = json.load(f).get('speakers', [])
     
-    story_entry = next((item for item in story_data if item["title"] == title.lower().replace(' ', '_')), None)
+    story_entry = next((item for item in story_data if item["title"] == title), None)
     existing_speakers = story_entry["speaker"] if story_entry else []
     languages = story_entry["language"] if story_entry else []
 
-      # Ensure existing_speakers is a list
+    # Ensure existing_speakers is a list
     if isinstance(existing_speakers, str):
         existing_speakers = [existing_speakers]
 
@@ -154,7 +154,7 @@ def process_text():
         text_chunks = split_text(TEXT)
         audio_files = []
         for i, chunk in enumerate(text_chunks):
-            audio_filename = f"{speaker}_{LANGUAGE}_{TITLE}_{i+1}.wav" if speaker else f"{LANGUAGE}_{TITLE}_{i+1}.wav"
+            audio_filename = f"{speaker}_{LANGUAGE}_{TITLE.lower().replace(' ', '_')}_{i+1}.wav" if speaker else f"{LANGUAGE}_{TITLE.lower().replace(' ', '_')}_{i+1}.wav"
             audio_path = os.path.join(app.root_path, '..', 'static', 'audio', audio_filename)
 
             # Generate audio file
@@ -202,8 +202,8 @@ def process_text():
             json.dump(story_data, f, indent=2)
 
         # Generate story HTML file
-        story_html = generate_story_html(TITLE.replace('_', ' ').title(), text_chunks, audio_files, LANGUAGE)
-        story_html_path = os.path.join(app.root_path, '..', 'static', 'story', f"{TITLE}.html")
+        story_html = generate_story_html(TITLE, text_chunks, audio_files, LANGUAGE)
+        story_html_path = os.path.join(app.root_path, '..', 'static', 'story', f"{TITLE.lower().replace(' ', '_')}.html")
         with open(story_html_path, 'w', encoding='utf-8') as f:
             f.write(story_html)
 
@@ -214,19 +214,18 @@ def process_text():
 
     return Response(generate(), mimetype='text/event-stream')
 
-
 def generate_audio_for_speaker(speaker, language, title, text):
     try:
         if not load_speaker_model(speaker):
             app.logger.error(f"Failed to load TTS model for speaker: {speaker}")
-            return False
+            return False, []
 
         chunks = text.split('. ')
         audio_files = []
         speaker_wav = os.path.join(app.root_path, '..', 'audio', f'{speaker}.wav')
         
         for i, chunk in enumerate(chunks):
-            audio_filename = f"{speaker}_{language}_{title}_{i+1}.wav"
+            audio_filename = f"{speaker}_{language}_{title.lower().replace(' ', '_')}_{i+1}.wav"
             audio_path = os.path.join(app.root_path, '..', 'static', 'audio', audio_filename)
 
             tts.tts_to_file(text=chunk,
@@ -234,7 +233,7 @@ def generate_audio_for_speaker(speaker, language, title, text):
                             speaker_wav=speaker_wav,
                             language=language)
 
-            audio_files.append(f"/built/static/audio/{audio_filename}")
+            audio_files.append({"text": chunk, "audio": f"/built/static/audio/{audio_filename}"})
 
         # Update story.json
         story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
@@ -263,11 +262,10 @@ def generate_audio_for_speaker(speaker, language, title, text):
             json.dump(story_data, f, indent=2)
 
         app.logger.info(f"Successfully generated audio for speaker: {speaker}")
-        return True
+        return True, audio_files
     except Exception as e:
         app.logger.error(f"Error in generate_audio_for_speaker: {str(e)}", exc_info=True)
-        return False
-
+        return False, []
 
 
 

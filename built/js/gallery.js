@@ -27,9 +27,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     const storyDiv = document.createElement('div');
                     storyDiv.className = 'story';
 
-                    const title = story.title.replace(/_/g, ' ').toLowerCase();
-                    const formattedTitle = title.charAt(0).toUpperCase() + title.slice(1);
-                    const imgSrc = `/built/static/image/${story.title}_cover.png`;
+                    const title = story.title;
+                    const formattedTitle = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase();
+                    const linkTitle = title.toLowerCase().replace(/ /g, '_');
+                    const imgSrc = `/built/static/image/${linkTitle}_cover.png`;
                     const defaultImgSrc = '/built/static/image/standard_cover.png';
 
                     const img = new Image();
@@ -46,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     storyDiv.appendChild(titleSpan);
                     storyLink.appendChild(storyDiv);
-                    storyLink.href = `/built/static/story/${story.title}.html`;
+                    storyLink.href = `/built/static/story/${linkTitle}.html`;
                     container.appendChild(storyLink);
                 });
 
