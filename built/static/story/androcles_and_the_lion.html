@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Androcles And The Lion</title>
+    <title>Androcles and the Lion</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,7 +39,7 @@
 </head>
 
 <body>
-    <h1>Androcles And The Lion</h1>
+    <h1>Androcles and the Lion</h1>
     <label for="existingSpeakers">Select Existing Speaker:</label>
     <select id="existingSpeakers" name="existingSpeakers">
     </select>
@@ -60,25 +60,25 @@
         <div class="chunk" data-index="1">
             <p>Once upon a time, in a small village nestled at the edge of a dense and mysterious forest, there lived a little girl named Lily.</p>
             <audio controls id="audio-1" data-index="1">
-                <source src="/built/static/audio/standard_en_androcles_and_the_lion_1.wav" type="audio/wav">
+                <source src="/built/static/audio/michel_en_androcles_and_the_lion_1.wav" type="audio/wav">
                 Your browser does not support the audio element.
             </audio>
         </div>
         <div class="chunk" data-index="2">
             <p>The villagers called her &amp;#x27;Forest Child&amp;#x27; because she spent most of her days exploring the woods, collecting wildflowers, and watching the animals that roamed freely within its boundaries.</p>
             <audio controls id="audio-2" data-index="2">
-                <source src="/built/static/audio/standard_en_androcles_and_the_lion_2.wav" type="audio/wav">
+                <source src="/built/static/audio/michel_en_androcles_and_the_lion_2.wav" type="audio/wav">
                 Your browser does not support the audio element.
             </audio>
         </div>
     </div>
 
-    <div id="speakerData" data-existing-speakers='[&quot;standard&quot;]' data-all-speakers='[&quot;standard&quot;, &quot;michel&quot;, &quot;recorded&quot;]'>
+    <div id="speakerData" data-existing-speakers='[&quot;standard&quot;, &quot;michel&quot;]' data-all-speakers='[&quot;standard&quot;, &quot;michel&quot;, &quot;recorded&quot;]'>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const title = "Androcles And The Lion".toLowerCase().replace(/ /g, '_');
+            const title = "Androcles and the Lion".toLowerCase().replace(/ /g, '_');
             const existingSpeakersSelect = document.getElementById('existingSpeakers');
             const allSpeakersSelect = document.getElementById('allSpeakers');
             const generateButton = document.getElementById('generateButton');

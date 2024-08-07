@@ -33,8 +33,8 @@ ChildGPT is an innovative application that creates custom children's stories bas
 
 1. **Run the Flask Application in seperate Consoles**
    ```bash
-   python built/scripts/generation.py  
-   python built/scripts/training.py
+   cd built/scripts
+   python app.py  
 2. **Access the Web Interface**
 
 *   Open your browser and navigate to http://localhost:5000.
