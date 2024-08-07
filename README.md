@@ -31,7 +31,8 @@ ChildGPT is an innovative application that creates custom children's stories bas
 
 ## Usage
 
-1. **Run the Flask Application in seperate Consoles**
+1. **Run the Flask Application**
+
    ```bash
    cd built/scripts
    python app.py  
