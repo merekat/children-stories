@@ -67,7 +67,8 @@
         <div class="chunk" data-index="{{index}}">
             <p>{{text}}</p>
             <audio controls id="audio-{{index}}" data-index="{{index}}">
-                <source src="{{audio}}" type="audio/wav">
+                <source src="/built/static/audio/standard_{{language}}_{{sanitized_title}}_{{index}}.wav"
+                    type="audio/wav">
                 Your browser does not support the audio element.
             </audio>
         </div>
@@ -79,7 +80,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const title = "{{title}}".toLowerCase().replace(/ /g, '_');
+            const originalTitle = "{{title}}";
+            const sanitizedTitle = "{{sanitized_title}}";
             const existingSpeakersSelect = document.getElementById('existingSpeakers');
             const allSpeakersSelect = document.getElementById('allSpeakers');
             const generateButton = document.getElementById('generateButton');
@@ -108,13 +110,8 @@
                     if (audioFiles) {
                         newSrc = audioFiles[index].audio;
                     } else {
-                        if (speaker === "standard") {
-                            newSrc =
-                                `/built/static/audio/standard_${language}_${title}_${audioIndex}.wav`;
-                        } else {
-                            newSrc =
-                                `/built/static/audio/${speaker}_${language}_${title}_${audioIndex}.wav`;
-                        }
+                        newSrc =
+                            `/built/static/audio/${speaker}_${language}_${sanitizedTitle}_${audioIndex}.wav`;
                     }
                     audio.querySelector('source').src = newSrc;
                     audio.load();
@@ -179,7 +176,7 @@
                         body: JSON.stringify({
                             speaker: speaker,
                             language: language,
-                            title: title,
+                            title: originalTitle, // Use the original title here
                             text: fullText
                         }),
                     })
@@ -203,7 +200,7 @@
                             populateAllSpeakers(allSpeakers, existingSpeakers);
                         } else {
                             generationStatus.textContent = "Error generating audio: " + data
-                                .message;
+                            .message;
                         }
                     })
                     .catch(error => {
