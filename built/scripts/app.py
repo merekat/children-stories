@@ -12,6 +12,7 @@ import chevron
 import subprocess
 import logging
 from threading import Thread
+from llama_cpp import Llama
 
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -19,18 +20,54 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Initialize Flask app
 app = Flask(__name__, static_url_path='/built', static_folder=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-
 app.config['DEBUG'] = False
 
 logging.basicConfig(level=logging.DEBUG)
 
+# Load Llama model
+model_directory = '../model/'
+model_name = "textgen.gguf"
+llm = Llama(model_path=os.path.join(model_directory, model_name),
+            n_threads=4,
+            n_ctx=4096,
+            temperature=1.1,
+            top_p=0.95,
+            verbose=False,
+            stop=["The end."])
+
+@app.route('/generate-story', methods=['POST'])
+def generate_story():
+    data = request.json
+    topic = data.get('topic', "happy animals")
+    age_range = data.get('age_range', "3 and 6")
+    word_count = data.get('word_count', 200)
+
+    ending = "The end."
+    constrains = "Only use appropriate sources for children."
+
+    prompt = f"""Write a bedtime story for children about {topic}. {constrains}
+                The story should be understandable for kids with an age between {age_range} years. 
+                The story should be about {word_count} words long and end with saying '{ending}'."""
+
+    output = llm.create_chat_completion(messages=[
+        {"role": "system", "content": "You are a story writing assistant."},
+        {"role": "user", "content": prompt}
+    ])
+
+    story = output["choices"][0]['message']['content']
+    title = story.split('\n')[0].strip()  # Assume the first line is the title
+
+    # Store the story and title
+    global TITLE, TEXT
+    TITLE = title
+    TEXT = story
+
+    return jsonify({"title": title, "story": story})
+
+
 # Define speaker, language, and title
 SPEAKER = ''.lower().replace(' ', '_')
 LANGUAGE = 'en'.lower().replace(' ', '_')
-TITLE = 'Androcles and the Lion'
-
-# Generated text
-TEXT = "Once upon a time, in a small village nestled at the edge of a dense and mysterious forest, there lived a little girl named Lily. The villagers called her 'Forest Child' because she spent most of her days exploring the woods, collecting wildflowers, and watching the animals that roamed freely within its boundaries."
 
 # Initialize TTS with the XTTS v2 model
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -151,6 +188,10 @@ def process_text():
     speaker = request.args.get('speaker', default='', type=str)
 
     def generate():
+        global TEXT, TITLE
+        if not TEXT or not TITLE:
+            return jsonify({"error": "No story generated yet"}), 400
+
         text_chunks = split_text(TEXT)
         audio_files = []
         for i, chunk in enumerate(text_chunks):
@@ -213,6 +254,7 @@ def process_text():
         yield "event: complete\ndata: {}\n\n"
 
     return Response(generate(), mimetype='text/event-stream')
+
 
 def generate_audio_for_speaker(speaker, language, title, text):
     try:

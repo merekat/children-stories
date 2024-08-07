@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Text-to-Speech</title>
+    <title>Create your Story</title>
 
     <style>
         #content {
@@ -17,26 +17,36 @@
         .chunk {
             margin-bottom: 20px;
         }
+
+        #storyContent {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
     </style>
 </head>
 
 <body>
-    <h1>Androcles and the Lion</h1>
+    <h1>Story Generator and Text-to-Speech</h1>
+    <button id="generateStoryButton">Generate Story</button>
+    <div id="storyContent"></div>
+
     <select id="speakerSelect">
         <option value="">Select a speaker</option>
     </select>
-    <button id="startButton" type="button">Start Processing</button>
+    <button id="startButton" type="button" disabled>Start Audio Processing</button>
     <div id="content"></div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
+            const generateStoryButton = $('#generateStoryButton');
+            const storyContent = $('#storyContent');
             const startButton = $('#startButton');
             const content = $('#content');
-
             const speakerSelect = $('#speakerSelect');
 
-            const loadingMessage = $('<span id="loadingMessage">Data processing ...</span>').hide();
+            const loadingMessage = $('<span id="loadingMessage">Processing ...</span>').hide();
             startButton.after(loadingMessage);
 
             let eventSource;
@@ -58,6 +68,36 @@
                 console.log("Request Failed: " + textStatus + ", " + error);
             });
 
+            generateStoryButton.on('click', function () {
+                generateStoryButton.prop('disabled', true);
+                storyContent.html('<p>Generating story...</p>');
+
+                $.ajax({
+                    url: `${backendUrl}/generate-story`,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        topic: "happy animals",
+                        age_range: "3 and 6",
+                        word_count: 200
+                    }),
+                    success: function (data) {
+                        storyContent.html(`
+                            <h2>${data.title}</h2>
+                            <p>${data.story}</p>
+                        `);
+                        startButton.prop('disabled', false);
+                    },
+                    error: function () {
+                        storyContent.html(
+                            '<p>Error generating story. Please try again.</p>');
+                    },
+                    complete: function () {
+                        generateStoryButton.prop('disabled', false);
+                    }
+                });
+            });
+
             startButton.on('click', function (event) {
                 event.preventDefault();
                 const selectedSpeaker = speakerSelect.val();
@@ -77,19 +117,18 @@
                 eventSource = new EventSource(
                     `${backendUrl}/process?speaker=${selectedSpeaker}`);
 
-
                 eventSource.onmessage = function (event) {
                     const data = JSON.parse(event.data);
                     console.log("Received data:", data);
                     const chunkDiv = document.createElement('div');
                     chunkDiv.className = 'chunk';
                     chunkDiv.innerHTML = `
-                <p>${data.text}</p>
-                <audio controls>
-                    <source src="${backendUrl}${data.audio}" type="audio/wav">
-                    Your browser does not support the audio element.
-                </audio>
-            `;
+                        <p>${data.text}</p>
+                        <audio controls>
+                            <source src="${backendUrl}${data.audio}" type="audio/wav">
+                            Your browser does not support the audio element.
+                        </audio>
+                    `;
                     content.append(chunkDiv);
 
                     const audioPlayer = chunkDiv.querySelector('audio');
