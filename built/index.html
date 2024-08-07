@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create your Story</title>
+    <title>Dynamic Story Generation and Text-to-Speech</title>
 
     <style>
         #content {
@@ -17,37 +17,25 @@
         .chunk {
             margin-bottom: 20px;
         }
-
-        #storyContent {
-            margin-top: 20px;
-            border: 1px solid #ddd;
-            padding: 10px;
-        }
     </style>
 </head>
 
 <body>
     <h1>Story Generator and Text-to-Speech</h1>
-    <button id="generateStoryButton">Generate Story</button>
-    <div id="storyContent"></div>
-
     <select id="speakerSelect">
         <option value="">Select a speaker</option>
     </select>
-    <button id="startButton" type="button" disabled>Start Audio Processing</button>
+    <button id="generateStoryButton" type="button">Generate Story</button>
     <div id="content"></div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
             const generateStoryButton = $('#generateStoryButton');
-            const storyContent = $('#storyContent');
-            const startButton = $('#startButton');
             const content = $('#content');
             const speakerSelect = $('#speakerSelect');
-
             const loadingMessage = $('<span id="loadingMessage">Processing ...</span>').hide();
-            startButton.after(loadingMessage);
+            generateStoryButton.after(loadingMessage);
 
             let eventSource;
             let audioPlayers = [];
@@ -69,8 +57,15 @@
             });
 
             generateStoryButton.on('click', function () {
+                const selectedSpeaker = speakerSelect.val();
+                if (!selectedSpeaker) {
+                    alert('Please select a speaker');
+                    return;
+                }
+
                 generateStoryButton.prop('disabled', true);
-                storyContent.html('<p>Generating story...</p>');
+                content.empty();
+                loadingMessage.show();
 
                 $.ajax({
                     url: `${backendUrl}/generate-story`,
@@ -79,43 +74,37 @@
                     data: JSON.stringify({
                         topic: "happy animals",
                         age_range: "3 and 6",
-                        word_count: 200
+                        word_count: 200,
+                        speaker: selectedSpeaker,
+                        language: 'en'
                     }),
                     success: function (data) {
-                        storyContent.html(`
-                            <h2>${data.title}</h2>
-                            <p>${data.story}</p>
-                        `);
-                        startButton.prop('disabled', false);
+                        if (data.success) {
+                            content.html(`<h2>${data.title}</h2>`);
+                            processAudio(selectedSpeaker, data.title);
+                        } else {
+                            content.html(
+                                '<p>Error generating story. Please try again.</p>');
+                        }
                     },
                     error: function () {
-                        storyContent.html(
-                            '<p>Error generating story. Please try again.</p>');
+                        content.html('<p>Error generating story. Please try again.</p>');
                     },
                     complete: function () {
                         generateStoryButton.prop('disabled', false);
+                        loadingMessage.hide();
                     }
                 });
             });
 
-            startButton.on('click', function (event) {
-                event.preventDefault();
-                const selectedSpeaker = speakerSelect.val();
-                if (!selectedSpeaker) {
-                    alert('Please select a speaker');
-                    return;
-                }
-
+            function processAudio(speaker, title) {
                 if (eventSource) {
                     eventSource.close();
                 }
 
-                content.empty();
                 audioPlayers = [];
-                loadingMessage.show();
 
-                eventSource = new EventSource(
-                    `${backendUrl}/process?speaker=${selectedSpeaker}`);
+                eventSource = new EventSource(`${backendUrl}/process?speaker=${speaker}&title=${title}`);
 
                 eventSource.onmessage = function (event) {
                     const data = JSON.parse(event.data);
@@ -151,8 +140,7 @@
 
                     if (content.children().length === 0) {
                         content.append(
-                            '<p>An error occurred while processing the text. Please try again.</p>'
-                        );
+                            '<p>An error occurred while processing the text. Please try again.</p>');
                     }
                 };
 
@@ -161,7 +149,7 @@
                     eventSource.close();
                     loadingMessage.hide();
                 });
-            });
+            }
         });
     </script>
 </body>
