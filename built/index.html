@@ -22,9 +22,30 @@
 
 <body>
     <h1>Story Generator and Text-to-Speech</h1>
+
+    <!-- Speaker Selection -->
     <select id="speakerSelect">
         <option value="">Select a speaker</option>
     </select>
+
+    <!-- New Speaker Section -->
+    <div id="newSpeakerSection">
+        <label for="speakerName">Enter Speaker Name:</label>
+        <input type="text" id="speakerName" name="speakerName">
+
+        <div id="recordingSection">
+            <h2>Record Audio</h2>
+            <button id="startRecord">Start Recording</button>
+            <button id="stopRecord" disabled>Stop Recording</button>
+            <audio id="audioPlayback" controls style="display:none;"></audio>
+        </div>
+
+        <div id="uploadSection">
+            <h2>Upload Audio</h2>
+            <input type="file" id="audioFileInput" accept="audio/*">
+        </div>
+    </div>
+
     <button id="generateStoryButton" type="button">Generate Story</button>
     <div id="content"></div>
 
@@ -34,38 +55,130 @@
             const generateStoryButton = $('#generateStoryButton');
             const content = $('#content');
             const speakerSelect = $('#speakerSelect');
-            const loadingMessage = $('<span id="loadingMessage">Processing ...</span>').hide();
-            generateStoryButton.after(loadingMessage);
+            const speakerNameInput = $('#speakerName');
+            const audioFileInput = $('#audioFileInput');
+            const startRecordButton = $('#startRecord');
+            const stopRecordButton = $('#stopRecord');
+            const audioPlayback = $('#audioPlayback');
+            const newSpeakerSection = $('#newSpeakerSection');
 
             let eventSource;
             let audioPlayers = [];
+            let mediaRecorder;
+            let audioChunks = [];
 
             const backendUrl = 'http://127.0.0.1:5000';
 
             // Load speaker options
-            $.getJSON(`${backendUrl}/speaker`, function (data) {
-                console.log("Received speaker data:", data);
-                if (data.speakers && data.speakers.length > 0) {
-                    data.speakers.forEach(function (speaker) {
-                        speakerSelect.append($('<option></option>').val(speaker).text(speaker));
-                    });
+            function loadSpeakers() {
+                $.getJSON(`${backendUrl}/speaker`, function (data) {
+                    speakerSelect.empty().append(
+                        '<option value="">Select a speaker</option><option value="new">Create new speaker</option>'
+                    );
+                    if (data.speakers && data.speakers.length > 0) {
+                        data.speakers.forEach(function (speaker) {
+                            speakerSelect.append($('<option></option>').val(speaker).text(
+                                speaker));
+                        });
+                    }
+                });
+            }
+
+            loadSpeakers();
+
+            // Handle speaker selection
+            speakerSelect.on('change', function () {
+                if (speakerSelect.val() === "new") {
+                    speakerNameInput.prop('disabled', false);
+                    audioFileInput.prop('disabled', false);
+                    startRecordButton.prop('disabled', false);
                 } else {
-                    console.log("No speakers found in the data.");
+                    speakerNameInput.prop('disabled', true).val('');
+                    audioFileInput.prop('disabled', true);
+                    startRecordButton.prop('disabled', true);
                 }
-            }).fail(function (jqxhr, textStatus, error) {
-                console.log("Request Failed: " + textStatus + ", " + error);
             });
 
+            // Handle speaker name input
+            speakerNameInput.on('input', function () {
+                if (speakerNameInput.val().length > 0) {
+                    speakerSelect.val("new").prop('disabled', true);
+                } else {
+                    speakerSelect.prop('disabled', false);
+                }
+            });
+
+            // Recording functionality
+            startRecordButton.on('click', async function () {
+                audioChunks = [];
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: true
+                });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, {
+                        type: 'audio/wav'
+                    });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    audioPlayback.attr('src', audioUrl).show();
+                };
+                mediaRecorder.start();
+                startRecordButton.prop('disabled', true);
+                stopRecordButton.prop('disabled', false);
+            });
+
+            stopRecordButton.on('click', function () {
+                mediaRecorder.stop();
+                startRecordButton.prop('disabled', false);
+                stopRecordButton.prop('disabled', true);
+            });
+
+            // Generate story
             generateStoryButton.on('click', function () {
                 const selectedSpeaker = speakerSelect.val();
-                if (!selectedSpeaker) {
-                    alert('Please select a speaker');
-                    return;
-                }
+                const speakerName = speakerNameInput.val();
+                const audioFile = audioFileInput[0].files[0];
 
+                if (selectedSpeaker === "new") {
+                    if (!speakerName || (!audioFile && audioChunks.length === 0)) {
+                        alert('Please enter a speaker name and provide an audio file or recording.');
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('speakerName', speakerName);
+                    if (audioFile) {
+                        formData.append('audioFile', audioFile);
+                    } else if (audioChunks.length > 0) {
+                        const audioBlob = new Blob(audioChunks, {
+                            type: 'audio/wav'
+                        });
+                        formData.append('audioFile', audioBlob, 'recording.wav');
+                    }
+
+                    // Save audio and update speaker.json
+                    fetch(`${backendUrl}/save-audio`, {
+                            method: 'POST',
+                            body: formData
+                        }).then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('Audio and speaker saved successfully!');
+                                startStoryGeneration(speakerName);
+                            } else {
+                                alert('Error: ' + data.error);
+                            }
+                        });
+                } else {
+                    // Use existing speaker
+                    startStoryGeneration(selectedSpeaker);
+                }
+            });
+
+            function startStoryGeneration(speaker) {
                 generateStoryButton.prop('disabled', true);
                 content.empty();
-                loadingMessage.show();
 
                 $.ajax({
                     url: `${backendUrl}/generate-story`,
@@ -75,16 +188,15 @@
                         topic: "happy animals",
                         age_range: "3 and 6",
                         word_count: 200,
-                        speaker: selectedSpeaker,
+                        speaker: speaker,
                         language: 'en'
                     }),
                     success: function (data) {
                         if (data.success) {
                             content.html(`<h2>${data.title}</h2>`);
-                            processAudio(selectedSpeaker, data.title);
+                            processAudio(speaker, data.title);
                         } else {
-                            content.html(
-                                '<p>Error generating story. Please try again.</p>');
+                            content.html('<p>Error generating story. Please try again.</p>');
                         }
                     },
                     error: function () {
@@ -92,10 +204,9 @@
                     },
                     complete: function () {
                         generateStoryButton.prop('disabled', false);
-                        loadingMessage.hide();
                     }
                 });
-            });
+            }
 
             function processAudio(speaker, title) {
                 if (eventSource) {
@@ -108,16 +219,15 @@
 
                 eventSource.onmessage = function (event) {
                     const data = JSON.parse(event.data);
-                    console.log("Received data:", data);
                     const chunkDiv = document.createElement('div');
                     chunkDiv.className = 'chunk';
                     chunkDiv.innerHTML = `
-                        <p>${data.text}</p>
-                        <audio controls>
-                            <source src="${backendUrl}${data.audio}" type="audio/wav">
-                            Your browser does not support the audio element.
-                        </audio>
-                    `;
+                    <p>${data.text}</p>
+                    <audio controls>
+                        <source src="${backendUrl}${data.audio}" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>
+                `;
                     content.append(chunkDiv);
 
                     const audioPlayer = chunkDiv.querySelector('audio');
@@ -136,7 +246,6 @@
                 eventSource.onerror = function (error) {
                     console.log('EventSource connection closed or encountered an error');
                     eventSource.close();
-                    loadingMessage.hide();
 
                     if (content.children().length === 0) {
                         content.append(
@@ -147,11 +256,11 @@
                 eventSource.addEventListener('complete', function () {
                     console.log('Processing complete');
                     eventSource.close();
-                    loadingMessage.hide();
                 });
             }
         });
     </script>
+
 </body>
 
 </html>
