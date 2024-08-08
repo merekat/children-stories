@@ -19,3 +19,4 @@ TTS
 flask_cors
 llama-cpp-python
 huggingface-hub
+

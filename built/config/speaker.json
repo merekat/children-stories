@@ -2,6 +2,8 @@
   "speakers": [
     "standard",
     "michel",
-    "recorded"
+    "recorded",
+    "michel_short",
+    "standard_short"
   ]
 }
