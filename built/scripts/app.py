@@ -160,88 +160,47 @@ def generate_story():
     TITLE = title
     TEXT = story
 
-    success, audio_files = generate_audio_for_speaker(speaker, language, title, story)
+    # No audio generation here; just return the text
+    return jsonify({
+        "success": True,
+        "title": title,
+        "audio_files": []  # No audio files initially
+    }), 200
 
-    if success:
-        return jsonify({
-            "success": True,
-            "title": title,
-            "audio_files": audio_files
-        }), 200
-    else:
-        return jsonify({
-            "success": False,
-            "error": "Failed to generate audio"
-        }), 500
-
-@app.route('/process')
+@app.route('/process', methods=['GET'])
 def process_text():
     speaker = request.args.get('speaker', default='', type=str)
     title = request.args.get('title', default='', type=str)
+    generate_audio = request.args.get('generate_audio', default='false', type=str).lower() == 'true'
 
     if not speaker or not title:
         return jsonify({"error": "Speaker and title are required"}), 400
 
-    def generate():
-        global TEXT, TITLE
+    global TEXT, TITLE
 
-        story_text = TEXT if TITLE == title else get_story_by_title(title)
-        
-        if not story_text:
-            yield f"data: {json.dumps({'error': 'Story not found'})}\n\n"
-            return
+    story_text = TEXT if TITLE == title else get_story_by_title(title)
+    
+    if not story_text:
+        return jsonify({"error": "Story not found"}), 404
 
-        text_chunks = split_text(story_text)
-        sanitized_title = sanitize_filename(title)
+    text_chunks = split_text(story_text)
+    results = []
 
-        for i, chunk in enumerate(text_chunks):
-            audio_filename = f"{speaker}_{LANGUAGE}_{sanitized_title}_{i+1}.wav"
+    for i, chunk in enumerate(text_chunks):
+        if generate_audio:
+            audio_filename = f"{speaker}_{LANGUAGE}_{sanitize_filename(title)}_{i+1}.wav"
             audio_path = os.path.join(app.root_path, '..', 'static', 'audio', audio_filename)
-
             tts.tts_to_file(text=chunk, file_path=audio_path, speaker_wav=os.path.join(app.root_path, '..', 'audio', f'{speaker}.wav'), language=LANGUAGE)
-
             audio_url = f"/built/static/audio/{audio_filename}"
-
-            result = {
-                'text': chunk,
-                'audio': audio_url
-            }
-
-            yield f"data: {json.dumps(result)}\n\n"
-
-        story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
-        
-        if os.path.exists(story_json_path):
-            with open(story_json_path, 'r') as f:
-                story_data = json.load(f)
         else:
-            story_data = []
+            audio_url = None
 
-        existing_entry = next((item for item in story_data if item["title"] == sanitized_title), None)
-        if existing_entry:
-            if speaker and speaker not in existing_entry["speaker"]:
-                existing_entry["speaker"].append(speaker)
-            if LANGUAGE not in existing_entry["language"]:
-                existing_entry["language"].append(LANGUAGE)
-        else:
-            new_entry = {
-                "title": sanitized_title,
-                "speaker": [speaker] if speaker else [],
-                "language": [LANGUAGE]
-            }
-            story_data.append(new_entry)
+        results.append({
+            'text': chunk,
+            'audio': audio_url
+        })
 
-        with open(story_json_path, 'w') as f:
-            json.dump(story_data, f, indent=2)
-
-        story_html = generate_story_html(sanitized_title, text_chunks, [f"/built/static/audio/{speaker}_{LANGUAGE}_{sanitized_title}_{i+1}.wav" for i in range(len(text_chunks))], LANGUAGE)
-        story_html_path = os.path.join(app.root_path, '..', 'static', 'story', f"{sanitized_title}.html")
-        with open(story_html_path, 'w', encoding='utf-8') as f:
-            f.write(story_html)
-
-        yield "event: complete\ndata: {}\n\n"
-
-    return Response(generate(), mimetype='text/event-stream')
+    return jsonify(results)
 
 def generate_audio_for_speaker(speaker, language, title, text):
     try:

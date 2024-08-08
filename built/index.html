@@ -62,7 +62,6 @@
             const audioPlayback = $('#audioPlayback');
             const newSpeakerSection = $('#newSpeakerSection');
 
-            let eventSource;
             let audioPlayers = [];
             let mediaRecorder;
             let audioChunks = [];
@@ -209,54 +208,54 @@
             }
 
             function processAudio(speaker, title) {
-                if (eventSource) {
-                    eventSource.close();
-                }
+                fetch(`${backendUrl}/process?speaker=${speaker}&title=${title}&generate_audio=false`)
+                    .then(response => response.json())
+                    .then(data => {
+                        content.empty();
+                        audioPlayers = [];
 
-                audioPlayers = [];
+                        data.forEach((item, index) => {
+                            const chunkDiv = document.createElement('div');
+                            chunkDiv.className = 'chunk';
 
-                eventSource = new EventSource(`${backendUrl}/process?speaker=${speaker}&title=${title}`);
+                            const audioPlayer = document.createElement('audio');
+                            audioPlayer.controls = true;
 
-                eventSource.onmessage = function (event) {
-                    const data = JSON.parse(event.data);
-                    const chunkDiv = document.createElement('div');
-                    chunkDiv.className = 'chunk';
-                    chunkDiv.innerHTML = `
-                    <p>${data.text}</p>
-                    <audio controls>
-                        <source src="${backendUrl}${data.audio}" type="audio/wav">
-                        Your browser does not support the audio element.
-                    </audio>
-                `;
-                    content.append(chunkDiv);
+                            // Append the audio player and text to the chunkDiv
+                            chunkDiv.appendChild(audioPlayer);
+                            chunkDiv.innerHTML += `<p>${item.text}</p>`;
+                            content.append(chunkDiv);
 
-                    const audioPlayer = chunkDiv.querySelector('audio');
-                    audioPlayers.push(audioPlayer);
+                            audioPlayers.push(audioPlayer);
+                        });
 
-                    audioPlayer.addEventListener('ended', function () {
-                        const currentIndex = audioPlayers.indexOf(this);
-                        if (currentIndex < audioPlayers.length - 1) {
-                            setTimeout(() => {
-                                audioPlayers[currentIndex + 1].play();
-                            }, 1000);
-                        }
-                    });
-                };
-
-                eventSource.onerror = function (error) {
-                    console.log('EventSource connection closed or encountered an error');
-                    eventSource.close();
-
-                    if (content.children().length === 0) {
+                        // Trigger audio generation after text is displayed
+                        generateAudioForChunks(speaker, title);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching text chunks:', error);
                         content.append(
                             '<p>An error occurred while processing the text. Please try again.</p>');
-                    }
-                };
+                    });
+            }
 
-                eventSource.addEventListener('complete', function () {
-                    console.log('Processing complete');
-                    eventSource.close();
-                });
+            function generateAudioForChunks(speaker, title) {
+                fetch(`${backendUrl}/process?speaker=${speaker}&title=${title}&generate_audio=true`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach((item, index) => {
+                            if (item.audio) {
+                                // Update the corresponding audio player's src
+                                audioPlayers[index].src = `${backendUrl}${item.audio}`;
+                                audioPlayers[index]
+                                    .load(); // Ensure the audio player is reloaded with the new source
+                            }
+                        });
+                        console.log('Audio generation complete');
+                    })
+                    .catch(error => {
+                        console.error('Error generating audio:', error);
+                    });
             }
         });
     </script>
