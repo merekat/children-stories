@@ -146,7 +146,7 @@ def generate_story():
 
     prompt = f"""Write a bedtime story for children about {topic}. {constrains} Start with a meaningful title for the story.
                 The story should be understandable for kids with an age between {age_range} years. 
-                The story should be about {word_count} words long and end with saying '{ending}'."""
+                The story should be about 100 words long and end with saying '{ending}'."""
 
     output = llm.create_chat_completion(messages=[
         {"role": "system", "content": "You are a story writing assistant."},

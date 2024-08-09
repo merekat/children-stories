@@ -62,7 +62,6 @@
             const audioPlayback = $('#audioPlayback');
             const newSpeakerSection = $('#newSpeakerSection');
 
-            let audioPlayers = [];
             let mediaRecorder;
             let audioChunks = [];
 
@@ -193,7 +192,7 @@
                     success: function (data) {
                         if (data.success) {
                             content.html(`<h2>${data.title}</h2>`);
-                            processAudio(speaker, data.title);
+                            displayTextChunks(speaker, data.title);
                         } else {
                             content.html('<p>Error generating story. Please try again.</p>');
                         }
@@ -207,29 +206,19 @@
                 });
             }
 
-            function processAudio(speaker, title) {
+            function displayTextChunks(speaker, title) {
                 fetch(`${backendUrl}/process?speaker=${speaker}&title=${title}&generate_audio=false`)
                     .then(response => response.json())
                     .then(data => {
-                        content.empty();
-                        audioPlayers = [];
-
                         data.forEach((item, index) => {
                             const chunkDiv = document.createElement('div');
                             chunkDiv.className = 'chunk';
-
-                            const audioPlayer = document.createElement('audio');
-                            audioPlayer.controls = true;
-
-                            // Append the audio player and text to the chunkDiv
-                            chunkDiv.appendChild(audioPlayer);
-                            chunkDiv.innerHTML += `<p>${item.text}</p>`;
+                            chunkDiv.innerHTML = `<p>${item.text}</p>`;
+                            chunkDiv.setAttribute('data-index', index);
                             content.append(chunkDiv);
-
-                            audioPlayers.push(audioPlayer);
                         });
 
-                        // Trigger audio generation after text is displayed
+                        // After displaying text, start generating audio
                         generateAudioForChunks(speaker, title);
                     })
                     .catch(error => {
@@ -245,13 +234,13 @@
                     .then(data => {
                         data.forEach((item, index) => {
                             if (item.audio) {
-                                // Update the corresponding audio player's src
-                                audioPlayers[index].src = `${backendUrl}${item.audio}`;
-                                audioPlayers[index]
-                                    .load(); // Ensure the audio player is reloaded with the new source
+                                const chunkDiv = content.find(`.chunk[data-index='${index}']`);
+                                const audioPlayer = document.createElement('audio');
+                                audioPlayer.controls = true;
+                                audioPlayer.src = `${backendUrl}${item.audio}`;
+                                chunkDiv.append(audioPlayer);
                             }
                         });
-                        console.log('Audio generation complete');
                     })
                     .catch(error => {
                         console.error('Error generating audio:', error);
