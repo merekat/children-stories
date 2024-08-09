@@ -1,5 +1,6 @@
-from flask import Flask, Response, send_from_directory, request, jsonify
+from flask import Flask, Response, send_from_directory, request, jsonify, render_template
 import torch
+import html
 from TTS.api import TTS
 import os
 import re
@@ -8,15 +9,21 @@ import json
 import logging
 from llama_cpp import Llama
 import warnings
-import html
 import chevron
+import logging
 
 warnings.filterwarnings("ignore", message="The attention mask is not set and cannot be inferred from input because pad token is same as eos token.")
 
 # Initialize Flask app
 app = Flask(__name__, static_url_path='/built', static_folder=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-app.config['DEBUG'] = False
+app.config['DEBUG'] = True
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+
+# Use Flask's logger
+app.logger.setLevel(logging.DEBUG)
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -144,9 +151,10 @@ def generate_story():
     ending = "The end."
     constrains = "Only use appropriate sources for children."
 
-    prompt = f"""Write a bedtime story for children about {topic}. {constrains} Start with a meaningful title for the story.
+    prompt = f"""Write a bedtime story for children about {topic}. {constrains} Start with a meaningful title for the story of maximal five words.
+                Do not include the word title nor any special characters. 
                 The story should be understandable for kids with an age between {age_range} years. 
-                The story should be about 100 words long and end with saying '{ending}'."""
+                The story should be about 50 words long and end with saying '{ending}'."""
 
     output = llm.create_chat_completion(messages=[
         {"role": "system", "content": "You are a story writing assistant."},
@@ -160,11 +168,10 @@ def generate_story():
     TITLE = title
     TEXT = story
 
-    # No audio generation here; just return the text
     return jsonify({
         "success": True,
         "title": title,
-        "audio_files": []  # No audio files initially
+        "audio_files": []
     }), 200
 
 @app.route('/process', methods=['GET'])
@@ -178,20 +185,24 @@ def process_text():
 
     global TEXT, TITLE
 
-    story_text = TEXT if TITLE == title else get_story_by_title(title)
+    # Use the sanitized title for processing
+    sanitized_title = sanitize_filename(title)
+    story_text = TEXT if TITLE == title else get_story_by_title(sanitized_title)
     
     if not story_text:
         return jsonify({"error": "Story not found"}), 404
 
     text_chunks = split_text(story_text)
     results = []
+    audio_files = []
 
     for i, chunk in enumerate(text_chunks):
         if generate_audio:
-            audio_filename = f"{speaker}_{LANGUAGE}_{sanitize_filename(title)}_{i+1}.wav"
+            audio_filename = f"{speaker}_{LANGUAGE}_{sanitized_title}_{i+1}.wav"
             audio_path = os.path.join(app.root_path, '..', 'static', 'audio', audio_filename)
             tts.tts_to_file(text=chunk, file_path=audio_path, speaker_wav=os.path.join(app.root_path, '..', 'audio', f'{speaker}.wav'), language=LANGUAGE)
             audio_url = f"/built/static/audio/{audio_filename}"
+            audio_files.append({"text": chunk, "audio": audio_url})
         else:
             audio_url = None
 
@@ -200,61 +211,49 @@ def process_text():
             'audio': audio_url
         })
 
+    # Update story.json with the new story data
+    update_story_json(sanitized_title, story_text, speaker, LANGUAGE)
+
+    # Generate and save the HTML file
+    save_story_html(sanitized_title, text_chunks, [af["audio"] for af in audio_files], LANGUAGE)
+
     return jsonify(results)
 
-def generate_audio_for_speaker(speaker, language, title, text):
-    try:
-        speaker_wav = os.path.join(app.root_path, '..', 'audio', f'{speaker}.wav')
-        if not os.path.exists(speaker_wav):
-            app.logger.error(f"Speaker audio file does not exist: {speaker_wav}")
-            return False, []
-
-        chunks = split_text(text)
-        audio_files = []
-        sanitized_title = sanitize_filename(title)
-
-        for i, chunk in enumerate(chunks):
-            audio_filename = f"{speaker}_{language}_{sanitized_title}_{i+1}.wav"
-            audio_path = os.path.join(app.root_path, '..', 'static', 'audio', audio_filename)
-
-            tts.tts_to_file(text=chunk, file_path=audio_path, speaker_wav=speaker_wav, language=language)
-
-            audio_files.append({"text": chunk, "audio": f"/built/static/audio/{audio_filename}"})
-
-        story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
-        if os.path.exists(story_json_path):
-            with open(story_json_path, 'r') as f:
-                story_data = json.load(f)
-        else:
-            story_data = []
-
-        existing_entry = next((item for item in story_data if item["title"] == sanitized_title), None)
-        if existing_entry:
-            if speaker not in existing_entry["speaker"]:
-                existing_entry["speaker"].append(speaker)
-            if language not in existing_entry["language"]:
-                existing_entry["language"].append(language)
-        else:
-            new_entry = {
-                "title": sanitized_title,
-                "speaker": [speaker],
-                "language": [language]
-            }
-            story_data.append(new_entry)
-
-        with open(story_json_path, 'w') as f:
-            json.dump(story_data, f, indent=2)
-
-        story_html = generate_story_html(sanitized_title, chunks, [af["audio"] for af in audio_files], language)
-        story_html_path = os.path.join(app.root_path, '..', 'static', 'story', f"{sanitized_title}.html")
-        with open(story_html_path, 'w', encoding='utf-8') as f:
-            f.write(story_html)
-
-        app.logger.info(f"Successfully generated audio for speaker: {speaker}")
-        return True, audio_files
-    except Exception as e:
-        app.logger.error(f"Error in generate_audio_for_speaker: {str(e)}", exc_info=True)
-        return False, []
+#def generate_audio_for_speaker(speaker, language, title, text):
+#    try:
+#        app.logger.info(f"Starting audio generation for speaker: {speaker}, title: {title}")
+#
+#        speaker_wav = os.path.join(app.root_path, '..', 'audio', f'{speaker}.wav')
+#        if not os.path.exists(speaker_wav):
+#            app.logger.error(f"Speaker audio file does not exist: {speaker_wav}")
+#            return False, []
+#
+#        chunks = split_text(text)
+#        audio_files = []
+#        sanitized_title = sanitize_filename(title)
+#        app.logger.info(f"Sanitized title: {sanitized_title}")
+#
+       # for i, chunk in enumerate(chunks):
+        #    audio_filename = f"{speaker}_{language}_{sanitized_title}_{i+1}.wav"
+         #   audio_path = os.path.join(app.root_path, '..', 'static', 'audio', audio_filename)
+#
+ #           tts.tts_to_file(text=chunk, file_path=audio_path, speaker_wav=speaker_wav, language=language)
+  #          app.logger.info(f"Generated audio file: {audio_filename}")
+#
+ #           audio_files.append({"text": chunk, "audio": f"/built/static/audio/{audio_filename}"})
+#
+#
+        # Update story.json with the new story data
+#        update_story_json(sanitized_title, text, speaker, language)
+#
+        # Generate and save the HTML file
+#        save_story_html(sanitized_title, chunks, [af["audio"] for af in audio_files], language)
+#
+#        app.logger.info("Audio generation completed successfully.")
+#        return True, audio_files
+#    except Exception as e:
+#        app.logger.error(f"Error in generate_audio_for_speaker: {str(e)}", exc_info=True)
+#        return False, []
 
 def get_story_by_title(title):
     story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
@@ -283,6 +282,8 @@ def story_page():
     return send_from_directory(os.path.join(app.root_path, '..', 'built', 'content'), 'story.html')
 
 def update_speaker_config(speaker):
+
+    app.logger.debug(f"Updating speaker config for: {speaker}")
     config_path = os.path.join(app.root_path, '..', 'config', 'speaker.json')
     os.makedirs(os.path.dirname(config_path), exist_ok=True)
 
@@ -298,8 +299,8 @@ def update_speaker_config(speaker):
     with open(config_path, 'w') as f:
         json.dump(config, f, indent=2)
 
-    logging.debug(f"Updated speaker.json with user: {speaker}")
-    logging.debug(f"Current speaker.json content: {json.dumps(config, indent=2)}")
+    app.logger.debug(f"Updated speaker.json with user: {speaker}")
+    app.logger.debug(f"Current speaker.json content: {json.dumps(config, indent=2)}")
 
 @app.route('/save-audio', methods=['POST'])
 def save_audio():
@@ -316,12 +317,53 @@ def save_audio():
 
         audio_file.save(audio_path)
 
-        update_speaker_config(speaker)
+        update_speaker_config(speaker)  # Ensure this is called
 
         return jsonify({'success': True, 'message': f'Audio saved as {audio_path}'})
     except Exception as e:
-        logging.error(f"Error saving audio: {e}", exc_info=True)
+        app.logger.error(f"Error saving audio: {e}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
+    
+def update_story_json(sanitized_title, text, speaker, language):
+    try:
+        story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
+        app.logger.debug(f"Updating story.json at: {story_json_path}")
+        
+        if os.path.exists(story_json_path):
+            with open(story_json_path, 'r') as f:
+                story_data = json.load(f)
+        else:
+            story_data = []
+
+        existing_entry = next((item for item in story_data if item["title"] == sanitized_title), None)
+        if existing_entry:
+            if speaker not in existing_entry["speaker"]:
+                existing_entry["speaker"].append(speaker)
+            if language not in existing_entry["language"]:
+                existing_entry["language"].append(language)
+            existing_entry["text"] = text
+        else:
+            new_entry = {
+                "title": sanitized_title,
+                "text": text,
+                "speaker": [speaker],
+                "language": [language]
+            }
+            story_data.append(new_entry)
+
+        with open(story_json_path, 'w') as f:
+            json.dump(story_data, f, indent=2)
+        app.logger.info(f"Updated story.json with new entry for title: {sanitized_title}")
+    except Exception as e:
+        app.logger.error(f"Error updating story.json: {e}", exc_info=True)
+
+def save_story_html(sanitized_title, chunks, audio_files, language):
+    app.logger.debug(f"Saving HTML for title: {sanitized_title}")
+    story_html = generate_story_html(sanitized_title, chunks, audio_files, language)
+    story_html_path = os.path.join(app.root_path, '..', 'static', 'story', f"{sanitized_title}.html")
+    with open(story_html_path, 'w', encoding='utf-8') as f:
+        f.write(story_html)
+    app.logger.info(f"HTML file generated at: {story_html_path}")
 
 @app.route('/test', methods=['GET'])
 def test():
