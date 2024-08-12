@@ -1,23 +1,24 @@
 [
   {
     "title": "Androcles and the Lion",
+    "text": "Once upon a time, in a sunny forest, there were happy animals...",
     "speaker": [
       "standard",
       "michel"
     ],
     "language": [
       "en"
-    ],
-    "text": "Once upon a time, in a sunny forest, there were happy animals..."
+    ]
   },
   {
-    "title": "Happy_Friends_in_Sunny_Meadow",
-    "text": "Happy Friends in Sunny Meadow\n\nIn a bright and sunny meadow, happy animals played together. A fluffy rabbit hopped with a butterfly. A little bird sang a happy song. A friendly squirrel shared his nuts with a hungry rabbit. They all smiled and said, \"We are happy friends!\" The end.",
+    "title": "Freunde_in_der_Sonnenscheintal",
+    "text": "Freunde in der Sonnenscheintal\n\nIn einem gr\u00fcnen Tal lebten viele Freunde. Ein kleiner B\u00e4r, ein Fuchs, ein Hase und ein Vogel spielten miteinander. Sie tanzten, sangen und lachten. Der B\u00e4r brachte Blumen f\u00fcr die Hase, der Fuchs zeigte dem Vogel den Weg zum besten Baum. Sie waren gl\u00fccklich, weil sie sich liebten. Die Sonne ging unter, die Freunde gingen schlafen. Sie tr\u00e4umten von weiteren Abenteuern. The end.",
     "speaker": [
-      "standard"
+      "standard",
+      "michel"
     ],
     "language": [
-      "en"
+      "de"
     ]
   }
 ]
