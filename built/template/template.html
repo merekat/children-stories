@@ -5,37 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{title}}</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            padding: 20px;
-        }
-
-        h1 {
-            color: #333;
-        }
-
-        .chunk {
-            margin-bottom: 20px;
-        }
-
-        audio {
-            width: 100%;
-        }
-
-        select,
-        button {
-            margin: 10px 0;
-            padding: 5px;
-        }
-
-        #generationStatus {
-            margin-top: 10px;
-            font-weight: bold;
-        }
-    </style>
-    <link rel="stylesheet" type="text/css" href="/built/css/style_story.css">
+    <link rel="stylesheet" type="text/css" href="/built/css/normalize.css">
+    <link rel="stylesheet" type="text/css" href="/built/css/system.css">
+    <link rel="stylesheet" type="text/css" href="/built/css/story.css">
 </head>
 
 <body>
@@ -78,6 +50,7 @@
     <div id="speakerData" data-existing-speakers='{{existing_speakers_json}}' data-all-speakers='{{all_speakers_json}}'>
     </div>
 
+    <!-- JavaScript to handle audio generation -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const originalTitle = "{{title}}";
@@ -107,7 +80,7 @@
                 audioElements.forEach((audio, index) => {
                     const audioIndex = audio.dataset.index;
                     let newSrc;
-                    if (audioFiles) {
+                    if (audioFiles && audioFiles.length > index && audioFiles[index].audio) {
                         newSrc = audioFiles[index].audio;
                     } else {
                         newSrc =
@@ -176,7 +149,7 @@
                         body: JSON.stringify({
                             speaker: speaker,
                             language: language,
-                            title: originalTitle, // Use the original title here
+                            title: originalTitle,
                             text: fullText
                         }),
                     })
@@ -189,15 +162,20 @@
                     .then(data => {
                         if (data.success) {
                             generationStatus.textContent = "Audio generated successfully!";
-                            // Update audio sources with new files
                             updateAudioSources(speaker, data.audio_files);
-                            // Lock the new speaker in the first select input
-                            existingSpeakers.push(speaker);
+
+                            // Update the existing speakers list
+                            if (!existingSpeakers.includes(speaker)) {
+                                existingSpeakers.push(speaker);
+                            }
                             populateExistingSpeakers(existingSpeakers);
-                            existingSpeakersSelect.value = speaker;
-                            // Reduce the available speakers in the second input
+
+                            // Update the new speakers list
                             allSpeakers = allSpeakers.filter(s => s !== speaker);
                             populateAllSpeakers(allSpeakers, existingSpeakers);
+
+                            // Set the first select input to the new speaker
+                            existingSpeakersSelect.value = speaker;
                         } else {
                             generationStatus.textContent = "Error generating audio: " + data
                             .message;
@@ -206,7 +184,8 @@
                     .catch(error => {
                         console.error('Error:', error);
                         generationStatus.textContent =
-                            "An error occurred while generating audio: " + error.message;
+                            "An error occurred while generating audio: " +
+                            error.message;
                     })
                     .finally(() => {
                         generateButton.disabled = false;
@@ -216,7 +195,9 @@
             const audioElements = document.querySelectorAll('audio');
             for (let i = 0; i < audioElements.length - 1; i++) {
                 audioElements[i].addEventListener('ended', function () {
-                    audioElements[i + 1].play();
+                    setTimeout(() => {
+                        audioElements[i + 1].play();
+                    }, 1000); // 1 second delay
                 });
             }
         });

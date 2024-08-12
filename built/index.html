@@ -5,19 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dynamic Story Generation and Text-to-Speech</title>
-
-    <style>
-        #content {
-            max-height: 500px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 10px;
-        }
-
-        .chunk {
-            margin-bottom: 20px;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="/built/css/normalize.css">
+    <link rel="stylesheet" type="text/css" href="/built/css/system.css">
+    <link rel="stylesheet" type="text/css" href="/built/css/main.css">
 </head>
 
 <body>
@@ -241,6 +231,16 @@
                                 chunkDiv.append(audioPlayer);
                             }
                         });
+
+                        // Add autoplay with delay
+                        const audioElements = content.find('audio');
+                        for (let i = 0; i < audioElements.length - 1; i++) {
+                            audioElements[i].addEventListener('ended', function () {
+                                setTimeout(() => {
+                                    audioElements[i + 1].play();
+                                }, 1000); // 1 second delay
+                            });
+                        }
                     })
                     .catch(error => {
                         console.error('Error generating audio:', error);
