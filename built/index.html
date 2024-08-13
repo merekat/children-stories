@@ -7,37 +7,145 @@
     <title>Dynamic Story Generation and Text-to-Speech</title>
     <link rel="stylesheet" type="text/css" href="/built/css/normalize.css">
     <link rel="stylesheet" type="text/css" href="/built/css/system.css">
-    <link rel="stylesheet" type="text/css" href="/built/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/built/css/story.css">
 </head>
 
-<body>
-    <h1>Story Generator and Text-to-Speech</h1>
-
-    <!-- Speaker Selection -->
-    <select id="speakerSelect">
-        <option value="">Select a speaker</option>
-    </select>
-
-    <!-- New Speaker Section -->
-    <div id="newSpeakerSection">
-        <label for="speakerName">Enter Speaker Name:</label>
-        <input type="text" id="speakerName" name="speakerName">
-
-        <div id="recordingSection">
-            <h2>Record Audio</h2>
-            <button id="startRecord">Start Recording</button>
-            <button id="stopRecord" disabled>Stop Recording</button>
-            <audio id="audioPlayback" controls style="display:none;"></audio>
+<body id="index">
+    <div class="header-content">
+        <div class="buttons-container">
+            <a href="#interface"><button id="scrollToInterface" class="main-button">Generate Story</button></a>
+            <a href="/built/content/gallery.html"><button class="ghost-button">Explore</button></a>
         </div>
-
-        <div id="uploadSection">
-            <h2>Upload Audio</h2>
-            <input type="file" id="audioFileInput" accept="audio/*">
+        <div class="info-box">
+            <div class="info-column">
+                <h3>Create</h3>
+                <p>Customized stories for your child.<br>Include personal info. Duration. Topic.</p>
+            </div>
+            <div class="info-column">
+                <h3>Listen</h3>
+                <p>Let an AI read the story to your child.<br>In your own voice.</p>
+            </div>
+            <div class="info-column">
+                <h3>Enjoy</h3>
+                <p>Explore already generated stories.<br>Or extend them to your child's liking.</p>
+            </div>
         </div>
     </div>
 
-    <button id="generateStoryButton" type="button">Generate Story</button>
-    <div id="content"></div>
+    <div id="interface" class="interface">
+        <div class="column left-column">
+            <h2>Story</h2>
+            <div class="input-group">
+                <label for="storyTitle">Topic</label>
+                <input type="text" id="storyTitle" name="storyTitle" placeholder="e.g. Adventures of a female knight">
+                <label for="storyTitle">optional</label>
+            </div>
+            <div class="input-group">
+                <label for="storyLength">Duration</label>
+                <input type="range" id="storyLength" name="storyLength" min="50" max="500">
+                <label for="storyLength" class="required">required</label>
+            </div>
+            <div class="input-group">
+                <label for="storyTheme">Main Character</label>
+                <input type="text" id="storyTheme" name="storyTheme" placeholder="e.g. Lilly, the knight">
+                <label for="storyTheme">optional</label>
+            </div>
+            <div class="input-group">
+                <label for="storyMood">Setting</label>
+                <select id="storyMood" name="storyMood">
+                    <option value="" disabled selected>Select an Environment</option>
+                    <option value="Mountains">Mountains</option>
+                    <option value="Forest">Forest</option>
+                    <option value="Sea">Sea</option>
+                </select>
+                <label for="storyMood">optional</label>
+            </div>
+            <div class="input-group">
+                <label for="storyPrompt">Individual Command</label>
+                <textarea id="storyPrompt" name="storyPrompt" rows="6"
+                    placeholder="e.g. Ask her to go to the castle."></textarea>
+                <label for="storyPrompt">optional</label>
+            </div>
+            <div class="input-group">
+                <label for="checkbox-grid">Moral Lessons</label>
+                <div class="checkbox-grid">
+                    <label><input type="checkbox" value="friendship"> Friendship</label>
+                    <label><input type="checkbox" value="diversity"> Diversity</label>
+                    <label><input type="checkbox" value="empathy"> Empathy</label>
+                    <label><input type="checkbox" value="respect"> Respect</label>
+                    <label><input type="checkbox" value="courage"> Courage</label>
+                    <label><input type="checkbox" value="honesty"> Honesty</label>
+                    <label><input type="checkbox" value="teamwork"> Teamwork</label>
+                    <label><input type="checkbox" value="kindess"> Kindess</label>
+                    <label><input type="checkbox" value="integrity"> Integrity</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-column">
+            <div class="child-section">
+                <h2>Child</h2>
+                <div class="input-group">
+                    <label for="childName">Child's Name</label>
+                    <input type="text" id="childName" name="childName" placeholder="e.g. Alice">
+                    <label for="childName">optional</label>
+                </div>
+                <div class="input-group">
+                    <label for="childAge">Language</label>
+                    <select id="childAge" name="childAge">
+                        <option value="en">English</option>
+                        <option value="de">German</option>
+                        <option value="fr">French</option>
+                    </select>
+                    <label for="childInterest" class="required">required</label>
+                </div>
+                <div class="input-group">
+                    <label for="childInterest">Age</label>
+                    <input type="range" id="childInterest" name="childInterest" min="1" max="5">
+                    <label for="childInterest">optional</label>
+                </div>
+            </div>
+            <div class="speaker-section">
+                <h2>Speaker</h2>
+                <div class="input-group">
+                    <label for="speakerName">Select a Speaker</label>
+                    <select id="speakerSelect">
+                    </select>
+                    <label for="childInterest" class="required">required</label>
+                </div>
+
+                <div class="input-group" id="newSpeakerSection">
+                    <label for="speakerName">Enter Speaker Name</label>
+                    <input type="text" id="speakerName" name="speakerName">
+                </div>
+                <div id="recordingSection">
+                    <h3>Record Audio</h3>
+                    <button id="startRecord">Start Recording</button>
+                    <button id="stopRecord" disabled>Stop Recording</button>
+                    <audio id="audioPlayback" controls style="display:none;"></audio>
+                </div>
+                <div id="uploadSection">
+                    <h3>Upload Audio</h3>
+                    <input type="file" id="audioFileInput" accept="audio/*">
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div class="button-container">
+        <button id="generateStoryButton" type="button">Generate Story</button>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <nav class="footer-nav">
+                <a href="/about.html">About Us</a>
+                <a href="/how-it-works.html">How the AI Works</a>
+                <a href="/imprint.html">Imprint</a>
+            </nav>
+        </div>
+    </footer>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
@@ -57,11 +165,20 @@
 
             const backendUrl = 'http://127.0.0.1:5000';
 
+            // Smooth scroll function
+            $('#scrollToInterface').on('click', function (event) {
+                event.preventDefault();
+
+                $('html, body').animate({
+                    scrollTop: $('#interface').offset().top
+                }, 500);
+            });
+
             // Load speaker options
             function loadSpeakers() {
                 $.getJSON(`${backendUrl}/speaker`, function (data) {
                     speakerSelect.empty().append(
-                        '<option value="">Select a speaker</option><option value="new">Create new speaker</option>'
+                        '<option value="new">Create new speaker</option>'
                     );
                     if (data.speakers && data.speakers.length > 0) {
                         data.speakers.forEach(function (speaker) {
@@ -200,21 +317,32 @@
                 fetch(`${backendUrl}/process?speaker=${speaker}&title=${title}&generate_audio=false`)
                     .then(response => response.json())
                     .then(data => {
+                        // Create the content div if it doesn't exist
+                        let contentDiv = $('#content');
+                        if (contentDiv.length === 0) {
+                            contentDiv = $('<div id="content"></div>');
+                            $('.button-container').after(contentDiv); // Insert after the button container
+                        }
+
+                        contentDiv.empty(); // Clear any existing content
+
                         data.forEach((item, index) => {
-                            const chunkDiv = document.createElement('div');
-                            chunkDiv.className = 'chunk';
-                            chunkDiv.innerHTML = `<p>${item.text}</p>`;
-                            chunkDiv.setAttribute('data-index', index);
-                            content.append(chunkDiv);
+                            const chunkDiv = $('<div></div>')
+                                .addClass('chunk')
+                                .attr('data-index', index)
+                                .html(`<p>${item.text}</p>`);
+                            contentDiv.append(chunkDiv);
                         });
+
+                        // Show the content div
+                        contentDiv.show();
 
                         // After displaying text, start generating audio
                         generateAudioForChunks(speaker, title);
                     })
                     .catch(error => {
                         console.error('Error fetching text chunks:', error);
-                        content.append(
-                            '<p>An error occurred while processing the text. Please try again.</p>');
+                        alert('An error occurred while processing the text. Please try again.');
                     });
             }
 
@@ -222,18 +350,19 @@
                 fetch(`${backendUrl}/process?speaker=${speaker}&title=${title}&generate_audio=true`)
                     .then(response => response.json())
                     .then(data => {
+                        const contentDiv = $('#content');
                         data.forEach((item, index) => {
                             if (item.audio) {
-                                const chunkDiv = content.find(`.chunk[data-index='${index}']`);
-                                const audioPlayer = document.createElement('audio');
-                                audioPlayer.controls = true;
-                                audioPlayer.src = `${backendUrl}${item.audio}`;
+                                const chunkDiv = contentDiv.find(`.chunk[data-index='${index}']`);
+                                const audioPlayer = $('<audio></audio>')
+                                    .attr('controls', true)
+                                    .attr('src', `${backendUrl}${item.audio}`);
                                 chunkDiv.append(audioPlayer);
                             }
                         });
 
                         // Add autoplay with delay
-                        const audioElements = content.find('audio');
+                        const audioElements = contentDiv.find('audio');
                         for (let i = 0; i < audioElements.length - 1; i++) {
                             audioElements[i].addEventListener('ended', function () {
                                 setTimeout(() => {
