@@ -69,7 +69,7 @@ body#gallery {
         0 2px 2px rgba(0, 0, 0, 0.1),
         0 4px 4px rgba(0, 0, 0, 0.1),
         0 8px 8px rgba(0, 0, 0, 0.1);
-    background-image: url('../../built/static/image/header.png');
+    background-image: url('../../built/static/image/header-gallery.png');
     background-size: cover;
     background-repeat: no-repeat;
     background-position: left bottom;
@@ -232,7 +232,6 @@ body#gallery {
 @media screen and (min-width: 1200px) {
     .gallery-container {
         grid-template-columns: repeat(3, minmax(250px, 1fr));
-        background-position: center bottom;
         width: 1200px;
         max-width: 1200px;
         margin-left: auto;
