@@ -12,24 +12,35 @@ from diffusers.pipelines.flux.pipeline_flux import FluxPipeline
 
 from transformers import T5EncoderModel
 
+# define saving path for downloaded models
+cache_dir = '../../models/text-to-image/flux.1-schnell'
+
 model = "black-forest-labs/FLUX.1-schnell" # official model flux1.-schnell from Blackforest
 model_tr = "https://huggingface.co/Kijai/flux-fp8/blob/main/flux1-schnell-fp8.safetensors" # quantized transformer from Hugginface
 
 # load and quantize transformer
-transformer = FluxTransformer2DModel.from_single_file(
-    model_tr, 
-    torch_dtype=torch.bfloat16
+transformer = FluxTransformer2DModel.from_single_file(model_tr, 
+                                                        torch_dtype=torch.bfloat16,
+                                                        cache_dir = cache_dir
 )
 quantize(transformer, weights=qfloat8)
 freeze(transformer)
 
 # load and quantize text_encoder_2
-text_encoder_2 = T5EncoderModel.from_pretrained(model, subfolder="text_encoder_2", torch_dtype=torch.bfloat16)
+text_encoder_2 = T5EncoderModel.from_pretrained(model,
+                                                subfolder="text_encoder_2",
+                                                torch_dtype=torch.bfloat16,
+                                                cache_dir=cache_dir
+)
 quantize(text_encoder_2, weights=qfloat8)
 freeze(text_encoder_2)
 
 # set up pipe line with main model and the two quantized models (transformer & text_encoder_2)
-pipe = FluxPipeline.from_pretrained(model, transformer=None, text_encoder_2=None, torch_dtype=torch.bfloat16)
+pipe = FluxPipeline.from_pretrained(model,
+                                    transformer=None,
+                                    text_encoder_2=None,
+                                    torch_dtype=torch.bfloat16
+)
 pipe.transformer = transformer
 pipe.text_encoder_2 = text_encoder_2
 pipe.to(torch.device('cpu'))
