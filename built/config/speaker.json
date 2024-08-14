@@ -1,8 +1,9 @@
 {
   "speakers": [
-    "standard",
     "michel",
     "recorded",
-    "michel_short"
+    "michel_short",
+    "bob",
+    "recording test"
   ]
 }
