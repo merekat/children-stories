@@ -16,7 +16,7 @@ model = "black-forest-labs/FLUX.1-schnell" # official model flux1.-schnell from 
 model_tr = "https://huggingface.co/Kijai/flux-fp8/blob/main/flux1-schnell-fp8.safetensors" # quantized transformer from Hugginface
 
 # load and quantize transformer
-transformer =transformer FluxTransformer2DModel.from_single_file(
+transformer = FluxTransformer2DModel.from_single_file(
     model_tr, 
     torch_dtype=torch.bfloat16
 )
