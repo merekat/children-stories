@@ -23,9 +23,10 @@
   },
   {
     "title": "Freunde_in_der_Sonnenscheintage",
-    "text": "Freunde in der Sonnenscheintage\n\nIn einem gr\u00fcnen Wald lebten viele Freunde. Ein kleiner Fuchs namens Felix spielte mit einem Hasen namens Hans. Ein Vogel namens Leo sang ein Lied. Ein B\u00e4r namens Boris tanzte mit einem Hase. Alle Freunde lachten und spielten zusammen. Die Sonne schien hell und warm. Die Freunde waren gl\u00fccklich. The end.",
+    "text": "Freunde in der Sonnenscheintage\n\nIn einem kleinen Dorf lebten viele freundliche Tiere. Ein kleiner Fuchs namens Felix spielte mit einem H\u00fcndchen namens Luna. Ein Vogel namens Leo sang ein sch\u00f6nes Lied. Ein B\u00e4r namens Boris tanzte mit einem Hasen namens Hans. Alle Tiere lachten und hatten viel Spa\u00df. The end.",
     "speaker": [
-      "michel_short"
+      "michel_short",
+      "bob"
     ],
     "language": [
       "de"
@@ -46,6 +47,16 @@
     "text": "Freunde in der Sonnenscheintages\n\nIn einem gr\u00fcnen Wald lebten viele Freunde. Ein kleiner B\u00e4r, ein Fuchs und ein Hase spielten zusammen. Sie liefen durch den Wald, pfl\u00fcckten Blumen und tanzten im Sonnenschein. Dann sa\u00dfen sie zusammen und a\u00dfen frische Fr\u00fcchte. Die Freunde waren gl\u00fccklich und lagen sich in den Armen. The end.",
     "speaker": [
       "standard"
+    ],
+    "language": [
+      "de"
+    ]
+  },
+  {
+    "title": "Freunde_in_der_gr\u00fcnen_Heimat",
+    "text": "Freunde in der gr\u00fcnen Heimat\n\nIn einem wundersch\u00f6nen Wald lebten viele freundliche Tiere. Ein kleiner Fuchs namens Felix spielte mit einem Hasen namens Hans. Ein Vogel namens Vicky sang ein sch\u00f6nes Lied. Ein B\u00e4r namens Boris tanzte mit einem Hase. Alle Tiere lachten und hatten Spa\u00df. Die Sonne schien und der Wald war voller Freude. The end.",
+    "speaker": [
+      "recording test"
     ],
     "language": [
       "de"

@@ -41,9 +41,14 @@
                 <label for="storyTitle">optional</label>
             </div>
             <div class="input-group">
-                <label for="storyLength">Duration</label>
-                <input type="range" id="storyLength" name="storyLength" min="50" max="500">
-                <label for="storyLength" class="required">required</label>
+                <div class="slider-container">
+                    <label for="storyLength">Duration</label>
+                    <input type="range" id="storyLength" name="storyLength" min="2" max="20" step="1" value="4">
+                    <label for="storyLength" class="required">required</label>
+                    <div class="slider-thumb">
+                        <span id="sliderValue"></span>
+                    </div>
+                </div>
             </div>
             <div class="input-group">
                 <label for="storyTheme">Main Character</label>
@@ -62,7 +67,7 @@
             </div>
             <div class="input-group">
                 <label for="storyPrompt">Individual Command</label>
-                <textarea id="storyPrompt" name="storyPrompt" rows="6"
+                <textarea id="storyPrompt" name="storyPrompt" rows="3"
                     placeholder="e.g. Ask her to go to the castle."></textarea>
                 <label for="storyPrompt">optional</label>
             </div>
@@ -91,8 +96,8 @@
                     <label for="childName">optional</label>
                 </div>
                 <div class="input-group">
-                    <label for="childAge">Language</label>
-                    <select id="childAge" name="childAge">
+                    <label for="language">Language</label>
+                    <select id="language" name="language">
                         <option value="en">English</option>
                         <option value="de">German</option>
                         <option value="fr">French</option>
@@ -100,33 +105,45 @@
                     <label for="childInterest" class="required">required</label>
                 </div>
                 <div class="input-group">
-                    <label for="childInterest">Age</label>
-                    <input type="range" id="childInterest" name="childInterest" min="1" max="5">
-                    <label for="childInterest">optional</label>
+                    <label for="childAge">Age</label>
+                    <div class="slider-container">
+                        <input type="range" id="childAge" name="childAge" min="2" max="13" step="1"> <label
+                            for="childAge">optional</label>
+                        <div class="slider-thumb"></div>
+                    </div>
                 </div>
             </div>
             <div class="speaker-section">
                 <h2>Speaker</h2>
                 <div class="input-group">
-                    <label for="speakerName">Select a Speaker</label>
+                    <label for="speakerSelect">Select a Speaker</label>
                     <select id="speakerSelect">
+                        <option value="standard" selected>Standard</option>
                     </select>
-                    <label for="childInterest" class="required">required</label>
+                    <label for="speakerSelect" class="required">required</label>
                 </div>
 
-                <div class="input-group" id="newSpeakerSection">
-                    <label for="speakerName">Enter Speaker Name</label>
+                <div class="input-group" id="newSpeakerSection" style="display: none;">
+                    <label for="speakerName">Enter your Name</label>
                     <input type="text" id="speakerName" name="speakerName">
-                </div>
-                <div id="recordingSection">
-                    <h3>Record Audio</h3>
-                    <button id="startRecord">Start Recording</button>
-                    <button id="stopRecord" disabled>Stop Recording</button>
-                    <audio id="audioPlayback" controls style="display:none;"></audio>
+                    <label for="speakerSelect" class="required">required</label>
                 </div>
                 <div id="uploadSection">
-                    <h3>Upload Audio</h3>
-                    <input type="file" id="audioFileInput" accept="audio/*">
+                    <div class="input-group" style="display: none;">
+                        <label for="audioFileInput">Upload Voice Sample</label>
+                        <input type="file" id="audioFileInput" accept="audio/*" class="btn btn-outline" lang="en">
+                        <label for="childInterest">optional</label>
+                    </div>
+                </div>
+                <div id="recordingSection">
+                    <div class="input-group" style="display: none;">
+                        <label for="audioFileInput">Or: Record Voice Sample</label>
+                        <div class="flex record-container">
+                            <button id="startRecord" class="btn btn-primary">Start Recording</button>
+                            <button id="stopRecord" class="btn btn-secondary" disabled>Stop Recording</button>
+                            <audio id="audioPlayback" controls></audio>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -148,6 +165,7 @@
     </footer>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/built/js/story.js"></script>
     <script>
         $(document).ready(function () {
             const generateStoryButton = $('#generateStoryButton');
@@ -174,22 +192,31 @@
                 }, 500);
             });
 
-            // Load speaker options
             function loadSpeakers() {
                 $.getJSON(`${backendUrl}/speaker`, function (data) {
                     speakerSelect.empty().append(
-                        '<option value="new">Create new speaker</option>'
+                        '<option value="new">Use your own Voice</option>'
                     );
+
+                    // Add the "Standard" option and set it as selected
+                    speakerSelect.append('<option value="standard" selected>Standard</option>');
+
                     if (data.speakers && data.speakers.length > 0) {
                         data.speakers.forEach(function (speaker) {
-                            speakerSelect.append($('<option></option>').val(speaker).text(
-                                speaker));
+                            if (speaker !==
+                                "Standard") { // Skip "Standard" if it's in the API response
+                                speakerSelect.append($('<option></option>').val(speaker).text(
+                                    speaker));
+                            }
                         });
                     }
                 });
             }
 
             loadSpeakers();
+
+
+
 
             // Handle speaker selection
             speakerSelect.on('change', function () {
