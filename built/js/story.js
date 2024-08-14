@@ -5,10 +5,26 @@ $(document).ready(function () {
     const durationSliderValue = $('#sliderValue');
     const durationOptions = [2, 5, 10, 15, 20];
 
-    // Child Age Slider elements
+    // Age Slider elements
     const childAgeSlider = $('#childAge');
     const childAgeThumb = childAgeSlider.siblings('.slider-thumb');
-    const childAgeOptions = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const childAgeRanges = [{
+            value: 1,
+            text: "0 - 2 years"
+        },
+        {
+            value: 2,
+            text: "2 - 5 years"
+        },
+        {
+            value: 3,
+            text: "5 - 7 years"
+        },
+        {
+            value: 4,
+            text: "7 - 12 years"
+        }
+    ];
 
     // Duration Slider functionality
     function updateDurationSlider() {
@@ -51,17 +67,24 @@ $(document).ready(function () {
     // Child Age Slider functionality
     function updateChildAgeSlider() {
         const value = parseInt(childAgeSlider.val());
-        const nearestValue = childAgeOptions.reduce((prev, curr) => {
-            return (Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev);
-        });
-        childAgeSlider.val(nearestValue);
-        const percent = (nearestValue - childAgeSlider.attr('min')) / (childAgeSlider.attr('max') - childAgeSlider.attr('min')) * 100;
-        childAgeThumb.css('left', `calc(${percent}%)`);
-        childAgeThumb.text(nearestValue); // Display the value on the thumb
+        const range = childAgeRanges.find(r => r.value === value);
+
+        childAgeSlider.val(value);
+        const sliderWidth = childAgeSlider.width();
+        const thumbWidth = 70; // Width of the thumb
+        const availableWidth = sliderWidth - thumbWidth;
+        const percent = (value - 1) / 3;
+        const leftPosition = percent * availableWidth + thumbWidth / 2;
+
+        childAgeThumb.css('left', `calc(${leftPosition}px - 35px)`);
+        childAgeThumb.text(range.text);
     }
 
+    childAgeSlider.attr('min', 1);
+    childAgeSlider.attr('max', 4);
+    childAgeSlider.attr('step', 1);
     childAgeSlider.on('input', updateChildAgeSlider);
-    childAgeSlider.val(4);
+    childAgeSlider.val(2); // Set default to "2 - 5 years"
     updateChildAgeSlider();
 
     const speakerSelect = $('#speakerSelect');

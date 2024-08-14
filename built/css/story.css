@@ -330,6 +330,11 @@ input[type=range]::-webkit-slider-thumb {
     z-index: 2;
 }
 
+#childAge ~ .slider-thumb {
+    width: 70px; 
+    border-radius: 5px;
+}
+
 #sliderValue {
     pointer-events: none;
 }
