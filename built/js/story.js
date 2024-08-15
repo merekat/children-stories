@@ -26,6 +26,27 @@ $(document).ready(function () {
         }
     ];
 
+    // Other elements
+    const speakerSelect = $('#speakerSelect');
+    const newSpeakerSection = $('#newSpeakerSection');
+    const uploadSection = $('#uploadSection .input-group');
+    const recordingSection = $('#recordingSection .input-group');
+    const startRecordButton = $('#startRecord');
+    const stopRecordButton = $('#stopRecord');
+    const readingExample = $('#readingExample');
+    const audioPlayback = $('#audioPlayback');
+    const generateStoryButton = $('#generateStoryButton');
+    const content = $('#content');
+    const speakerNameInput = $('#speakerName');
+    const audioFileInput = $('#audioFileInput');
+    const childNameInput = $('#childName');
+    const languageSelect = $('#language');
+
+    const backendUrl = 'http://127.0.0.1:5000';
+
+    let mediaRecorder;
+    let audioChunks = [];
+
     // Duration Slider functionality
     function updateDurationSlider() {
         const value = parseInt(durationSlider.val());
@@ -86,24 +107,6 @@ $(document).ready(function () {
     childAgeSlider.on('input', updateChildAgeSlider);
     childAgeSlider.val(2); // Set default to "2 - 5 years"
     updateChildAgeSlider();
-
-    const speakerSelect = $('#speakerSelect');
-    const newSpeakerSection = $('#newSpeakerSection');
-    const uploadSection = $('#uploadSection .input-group');
-    const recordingSection = $('#recordingSection .input-group');
-    const startRecordButton = $('#startRecord');
-    const stopRecordButton = $('#stopRecord');
-    const readingExample = $('#readingExample');
-    const audioPlayback = $('#audioPlayback');
-    const generateStoryButton = $('#generateStoryButton');
-    const content = $('#content');
-    const speakerNameInput = $('#speakerName');
-    const audioFileInput = $('#audioFileInput');
-
-    const backendUrl = 'http://127.0.0.1:5000';
-
-    let mediaRecorder;
-    let audioChunks = [];
 
     // Initially hide all sections
     newSpeakerSection.hide();
@@ -212,8 +215,17 @@ $(document).ready(function () {
         const speakerName = speakerNameInput.val();
         const audioFile = audioFileInput[0].files[0];
 
-        // Save child information
-        saveChildInfo(childName, childAge, language);
+        // Get child information
+        const childName = childNameInput.val().trim();
+        const childAge = childAgeSlider.val();
+        const language = languageSelect.val();
+
+
+        // Save child information only if childName is not empty
+        if (childName) {
+            saveChildInfo(childName, childAge, language);
+        }
+
 
         if (selectedSpeaker === "new") {
             if (!speakerName || (!audioFile && audioChunks.length === 0)) {
@@ -396,29 +408,88 @@ $(document).ready(function () {
             });
     }
 
+    function setupChildNameAutocomplete() {
+        $.ajax({
+            url: `${backendUrl}/get-child-data`,
+            method: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    const childNames = Object.keys(response.data);
+                    if (childNames.length > 0) {
+                        childNameInput.autocomplete({
+                            source: childNames,
+                            select: function (event, ui) {
+                                updateChildInfo(response.data[ui.item.value]);
+                            }
+                        });
+
+                    } else {
+                        console.log('No child names found in the data');
+                    }
+                } else {
+                    console.error('Error in get-child-data response:', response.error);
+                }
+            },
+            error: function (error) {
+                console.error('Error fetching child data:', error);
+            }
+        });
+    }
+
+    function updateChildInfo(childInfo) {
+        if (childInfo) {
+            languageSelect.val(childInfo.language);
+            childAgeSlider.val(childInfo.age_group_value);
+            updateChildAgeSlider(); // Update the slider UI
+        }
+    }
+
     function saveChildInfo(childName, childAge, language) {
-        fetch(`${backendUrl}/save-child-info`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    childName: childName,
-                    childAge: childAge,
-                    language: language
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
+        if (!childName.trim()) {
+            console.log('Child name is empty, not saving information');
+            return;
+        }
+
+        $.ajax({
+            url: `${backendUrl}/save-child-info`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                childName: childName.trim(),
+                childAge: parseInt(childAge),
+                language: language
+            }),
+            success: function (data) {
                 if (data.success) {
-                    console.log('Child information saved successfully');
+                    setupChildNameAutocomplete(); // Refresh autocomplete options
                 } else {
                     console.error('Error saving child information:', data.error);
                 }
-            })
-            .catch(error => {
+            },
+            error: function (error) {
                 console.error('Error saving child information:', error);
-            });
+            }
+        });
     }
 
+
+    // Event listener for manual input
+    childNameInput.on('change', function () {
+        const enteredName = $(this).val().trim();
+        $.ajax({
+            url: `${backendUrl}/get-child-data`,
+            method: 'GET',
+            success: function (response) {
+                if (response.success && response.data[enteredName]) {
+                    updateChildInfo(response.data[enteredName]);
+                }
+            },
+            error: function (error) {
+                console.error('Error fetching child data:', error);
+            }
+        });
+    });
+
+    // Set up autocomplete when the page loads
+    setupChildNameAutocomplete();
 });

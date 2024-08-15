@@ -12,6 +12,7 @@ import warnings
 import chevron
 import logging
 import random
+from datetime import datetime
 
 warnings.filterwarnings("ignore", message="The attention mask is not set and cannot be inferred from input because pad token is same as eos token.")
 
@@ -528,39 +529,79 @@ def handle_exception(e):
     return jsonify({'success': False, 'error': 'An unexpected error occurred'}), 500
 
 # Define the path to the child.json file
-CHILD_JSON_PATH = os.path.join('built', 'config', 'child.json')
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+CHILD_JSON_PATH = os.path.join(parent_dir, 'config', 'child.json')
+
+print(f"Child JSON Path: {CHILD_JSON_PATH}")
 
 @app.route('/save-child-info', methods=['POST'])
 def save_child_info():
     data = request.json
     child_name = data.get('childName')
-    child_age = data.get('childAge')
+    child_age = data.get('childAge')  # This will be 1, 2, 3, or 4
     language = data.get('language')
 
     try:
-        # Check if the file exists, if not, create an empty dictionary
         if os.path.exists(CHILD_JSON_PATH):
             with open(CHILD_JSON_PATH, 'r') as f:
                 child_data = json.load(f)
         else:
             child_data = {}
 
-        # Update or add the child's information
+        # Store only the necessary information
         child_data[child_name] = {
-            'age': child_age,
-            'language': language
+            'age_group_value': child_age,  # Store the slider value directly
+            'language': language,
+            'last_updated': datetime.now().timestamp()
         }
 
-        # Ensure the directory exists
         os.makedirs(os.path.dirname(CHILD_JSON_PATH), exist_ok=True)
 
-        # Write the updated data back to the file
         with open(CHILD_JSON_PATH, 'w') as f:
             json.dump(child_data, f, indent=2)
 
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+    
+@app.route('/get-child-data', methods=['GET'])
+def get_child_data():
+    try:
+        print(f"Attempting to read file from: {CHILD_JSON_PATH}")
+        if not os.path.exists(CHILD_JSON_PATH):
+            print(f"File does not exist: {CHILD_JSON_PATH}")
+            return jsonify({'success': False, 'error': 'Child data file not found'}), 404
 
+        with open(CHILD_JSON_PATH, 'r') as f:
+            child_data = json.load(f)
+        
+        print(f"Raw child data: {child_data}")
+        
+        # Remove any empty string keys
+        child_data = {k: v for k, v in child_data.items() if k}
+        
+        # Sort children by most recently added/updated
+        sorted_children = sorted(child_data.items(), key=lambda x: x[1].get('last_updated', 0), reverse=True)
+        
+        # Get the last 5 entries
+        recent_children = dict(sorted_children[:5])
+        
+        print(f"Processed child data: {recent_children}")
+        
+        return jsonify({'success': True, 'data': recent_children})
+    except Exception as e:
+        print(f"Error in get_child_data: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
+@app.route('/check-child-json', methods=['GET'])
+def check_child_json():
+    try:
+        with open(CHILD_JSON_PATH, 'r') as f:
+            child_data = json.load(f)
+        return jsonify({'success': True, 'data': child_data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
 if __name__ == '__main__':
     app.run(debug=True, port=5000, use_reloader=False, threaded=False)
