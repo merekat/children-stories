@@ -71,12 +71,12 @@ $(document).ready(function () {
 
         childAgeSlider.val(value);
         const sliderWidth = childAgeSlider.width();
-        const thumbWidth = 70; // Width of the thumb
+        const thumbWidth = 80; // Width of the thumb
         const availableWidth = sliderWidth - thumbWidth;
         const percent = (value - 1) / 3;
         const leftPosition = percent * availableWidth + thumbWidth / 2;
 
-        childAgeThumb.css('left', `calc(${leftPosition}px - 35px)`);
+        childAgeThumb.css('left', `calc(${leftPosition}px - 40px)`);
         childAgeThumb.text(range.text);
     }
 
@@ -91,16 +91,69 @@ $(document).ready(function () {
     const newSpeakerSection = $('#newSpeakerSection');
     const uploadSection = $('#uploadSection .input-group');
     const recordingSection = $('#recordingSection .input-group');
+    const startRecordButton = $('#startRecord');
+    const stopRecordButton = $('#stopRecord');
+    const readingExample = $('#readingExample');
+    const audioPlayback = $('#audioPlayback');
+
+    let mediaRecorder;
+    let audioChunks = [];
+
+    // Initially hide all sections
+    newSpeakerSection.hide();
+    uploadSection.hide();
+    recordingSection.hide();
 
     speakerSelect.on('change', function () {
         if (speakerSelect.val() === "new") {
             newSpeakerSection.show();
             uploadSection.show();
             recordingSection.show();
+            readingExample.show();
+            audioPlayback.hide();
+            startRecordButton.prop('disabled', false);
+            stopRecordButton.prop('disabled', true);
         } else {
             newSpeakerSection.hide();
             uploadSection.hide();
             recordingSection.hide();
+        }
+    });
+
+    // Recording functionality
+    startRecordButton.on('click', async function () {
+        audioChunks = [];
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: true
+            });
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, {
+                    type: 'audio/wav'
+                });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                audioPlayback.attr('src', audioUrl);
+            };
+            mediaRecorder.start();
+            startRecordButton.prop('disabled', true);
+            stopRecordButton.prop('disabled', false);
+            readingExample.show();
+            audioPlayback.hide();
+        } catch (err) {
+            console.error('Error accessing microphone:', err);
+            alert('Error accessing microphone. Please make sure you have granted permission.');
+        }
+    });
+
+    stopRecordButton.on('click', function () {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            startRecordButton.prop('disabled', false);
+            stopRecordButton.prop('disabled', true);
+            readingExample.hide();
+            audioPlayback.show();
         }
     });
 

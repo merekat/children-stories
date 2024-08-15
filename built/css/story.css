@@ -331,7 +331,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 #childAge ~ .slider-thumb {
-    width: 70px; 
+    width: 80px; 
     border-radius: 5px;
 }
 
@@ -367,6 +367,11 @@ input[type=range]::-webkit-slider-thumb {
 
 .checkbox-grid input[type="checkbox"]:checked {
     accent-color: var(--color-first);
+}
+
+#speakerSelect option:first-child {
+    font-weight: bold;
+    color: var(--gray-9);
 }
 
 .record-container {
@@ -413,10 +418,15 @@ input[type=range]::-webkit-slider-thumb {
     cursor: not-allowed;
 }
 
+.record-container {
+        margin-top: 5px;
+}
+
 .record-container audio {
     width: 100%;
      background-color: #f0f0f0;
     border-radius: 5px;
+
 }
 
 /* Custom audio player styling */
@@ -432,6 +442,10 @@ input[type=range]::-webkit-slider-thumb {
 .record-container audio::-webkit-media-controls-current-time-display,
 .record-container audio::-webkit-media-controls-time-remaining-display {
     color: var(--gray-9);
+}
+
+#readingExample p {
+    margin: 0;
 }
 
 

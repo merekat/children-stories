@@ -44,7 +44,6 @@
                 <div class="slider-container">
                     <label for="storyLength">Duration</label>
                     <input type="range" id="storyLength" name="storyLength" min="2" max="20" step="1" value="4">
-                    <label for="storyLength" class="required">required</label>
                     <div class="slider-thumb">
                         <span id="sliderValue"></span>
                     </div>
@@ -72,17 +71,17 @@
                 <label for="storyPrompt">optional</label>
             </div>
             <div class="input-group">
-                <label for="checkbox-grid">Moral Lessons</label>
-                <div class="checkbox-grid">
-                    <label><input type="checkbox" value="friendship"> Friendship</label>
-                    <label><input type="checkbox" value="diversity"> Diversity</label>
-                    <label><input type="checkbox" value="empathy"> Empathy</label>
-                    <label><input type="checkbox" value="respect"> Respect</label>
-                    <label><input type="checkbox" value="courage"> Courage</label>
-                    <label><input type="checkbox" value="honesty"> Honesty</label>
-                    <label><input type="checkbox" value="teamwork"> Teamwork</label>
-                    <label><input type="checkbox" value="kindess"> Kindess</label>
-                    <label><input type="checkbox" value="integrity"> Integrity</label>
+                <label id="moralLessonLabel">Moral Lessons</label>
+                <div class="checkbox-grid" role="group" aria-labelledby="moralLessonLabel">
+                    <label><input type="checkbox" name="moralLesson" value="friendship"> Friendship</label>
+                    <label><input type="checkbox" name="moralLesson" value="diversity"> Diversity</label>
+                    <label><input type="checkbox" name="moralLesson" value="empathy"> Empathy</label>
+                    <label><input type="checkbox" name="moralLesson" value="respect"> Respect</label>
+                    <label><input type="checkbox" name="moralLesson" value="courage"> Courage</label>
+                    <label><input type="checkbox" name="moralLesson" value="honesty"> Honesty</label>
+                    <label><input type="checkbox" name="moralLesson" value="teamwork"> Teamwork</label>
+                    <label><input type="checkbox" name="moralLesson" value="kindness"> Kindness</label>
+                    <label><input type="checkbox" name="moralLesson" value="integrity"> Integrity</label>
                 </div>
             </div>
         </div>
@@ -102,13 +101,12 @@
                         <option value="de">German</option>
                         <option value="fr">French</option>
                     </select>
-                    <label for="childInterest" class="required">required</label>
+                    <label for="language" class="required">required</label>
                 </div>
                 <div class="input-group">
                     <label for="childAge">Age</label>
                     <div class="slider-container">
-                        <input type="range" id="childAge" name="childAge" min="1" max="4" step="1"> <label
-                            for="childAge">optional</label>
+                        <input type="range" id="childAge" name="childAge" min="1" max="4" step="1">
                         <div class="slider-thumb"></div>
                     </div>
                 </div>
@@ -130,18 +128,23 @@
                 </div>
                 <div id="uploadSection">
                     <div class="input-group" style="display: none;">
-                        <label for="audioFileInput">Upload Voice Sample</label>
+                        <label for="audioFileInput">Option 1: Upload Voice Sample</label>
                         <input type="file" id="audioFileInput" accept="audio/*" class="btn btn-outline" lang="en">
-                        <label for="childInterest">optional</label>
                     </div>
                 </div>
                 <div id="recordingSection">
-                    <div class="input-group" style="display: none;">
-                        <label for="audioFileInput">Or: Record Voice Sample</label>
+                    <div class="input-group">
+                        <label for="audioFileInput">Option 2: Record Voice Sample</label>
                         <div class="flex record-container">
                             <button id="startRecord" class="btn btn-primary">Start Recording</button>
                             <button id="stopRecord" class="btn btn-secondary" disabled>Stop Recording</button>
-                            <audio id="audioPlayback" controls></audio>
+                            <div id="readingExample">
+                                <p>
+                                    <b>Read slowly:</b> "Once upon a time, in a magical forest, there lived a kind
+                                    little fairy named Lilly. She had shimmering wings and a heart full of dreams."
+                                </p>
+                            </div>
+                            <audio id="audioPlayback" controls style="display: none;"></audio>
                         </div>
                     </div>
                 </div>
