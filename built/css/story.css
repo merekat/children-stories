@@ -62,7 +62,7 @@ body#index {
                 0 2px 2px rgba(0, 0, 0, 0.1),
                 0 4px 4px rgba(0, 0, 0, 0.1),
                 0 8px 8px rgba(0, 0, 0, 0.1);
-    background-image: url('../../built/static/image/header-index.png');
+    background-image: url('../../built/image/header-index.png');
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center bottom;
@@ -136,7 +136,7 @@ body#index {
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin: 4px 7px;
-    width: calc(100% - 2 * 7px);
+    width: calc(100% - 2 * 7px );
 }
 
 @media screen and (min-width: 600px) {
@@ -500,6 +500,84 @@ input[type=range]::-webkit-slider-thumb {
     background-color: var(--gray-6);
     color: var(--gray-1);
     cursor: not-allowed;
+}
+
+#content {
+    max-width: 800px;
+    width: 100%;
+    padding: var(--space-1) var(--space-2);
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 1100px;
+    margin: 20px auto 50px auto;
+}
+
+.story-title {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: var(--space-5);
+    text-align: center;
+}
+
+.chunk {
+    position: relative;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+        max-width: var(--chunk-width);
+    left: calc(55% - (var(--chunk-width) / 2));
+        max-width: var(--chunk-width);
+    left: calc(55% - (var(--chunk-width) / 2));
+}
+
+@media screen and (min-width: 550px) {
+    #content {
+        padding: var(--space-2) var(--space-4);
+    }
+    .chunk {    
+            --chunk-width: 400px;
+    }
+    .story-title {
+    margin-bottom: var(--space-7);
+    }
+}
+
+@media screen and (min-width: 900px) {
+    #content {
+        padding: var(--space-8) var(--space-8);
+    }
+}
+
+.chunk p {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--gray-9);
+    flex: 1;
+}
+
+.chunk:nth-of-type(4n - 3),
+.chunk:nth-of-type(4n - 2) {    
+    left: calc(45% - (var(--chunk-width) / 2));
+}
+
+.chunk:nth-of-type(2n) {    
+    margin-bottom: var(--space-6)
+}
+
+.play-button {
+    background: none;
+    border: none;
+    color: var(--color-first);
+    cursor: pointer;
+    font-size: 1.2rem;
+    margin-right: 10px;
+    padding: 5px;
+}
+
+.play-button:hover {
+    color: var(--color-first-dark-1);
 }
 
 .footer {

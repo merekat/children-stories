@@ -4,25 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{title}}</title>
-
-    <link rel="icon" href="../image/favicon.ico" sizes="48x48">
-    <link rel="icon" href="../image/favicon.svg" sizes="any" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="../image/apple-touch-icon.png">
-
-
+    <title>Freunde_im_grünen_Wald</title>
     <link rel="stylesheet" type="text/css" href="/built/css/normalize.css">
     <link rel="stylesheet" type="text/css" href="/built/css/system.css">
     <link rel="stylesheet" type="text/css" href="/built/css/story.css">
 </head>
 
 <body>
-    <h1>{{title}}</h1>
+    <h1>Freunde_im_grünen_Wald</h1>
     <label for="existingSpeakers">Select Existing Speaker:</label>
     <select id="existingSpeakers" name="existingSpeakers">
-        {{#existing_speakers}}
-        <option value="{{.}}">{{.}}</option>
-        {{/existing_speakers}}
     </select>
 
     <br>
@@ -30,9 +21,6 @@
     <label for="allSpeakers">Select New Speaker:</label>
     <select id="allSpeakers" name="allSpeakers">
         <option value="">Select a new speaker</option>
-        {{#all_speakers}}
-        <option value="{{.}}">{{.}}</option>
-        {{/all_speakers}}
     </select>
 
     <br>
@@ -41,31 +29,21 @@
     <div id="generationStatus"></div>
 
     <div id="audioChunks">
-        {{#chunks}}
-        <div class="chunk" data-index="{{index}}">
-            <p>{{text}}</p>
-            <audio controls id="audio-{{index}}" data-index="{{index}}">
-                <source src="/built/static/audio/standard_{{language}}_{{sanitized_title}}_{{index}}.wav"
-                    type="audio/wav">
-                Your browser does not support the audio element.
-            </audio>
-        </div>
-        {{/chunks}}
     </div>
 
-    <div id="speakerData" data-existing-speakers='{{existing_speakers_json}}' data-all-speakers='{{all_speakers_json}}'>
+    <div id="speakerData" data-existing-speakers='[&quot;standard&quot;]' data-all-speakers='[&quot;michel&quot;, &quot;recorded&quot;, &quot;michel_short&quot;, &quot;bob&quot;, &quot;recording test&quot;]'>
     </div>
 
     <!-- JavaScript to handle audio generation -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const originalTitle = "{{title}}";
-            const sanitizedTitle = "{{sanitized_title}}";
+            const originalTitle = "Freunde_im_grünen_Wald";
+            const sanitizedTitle = "Freunde_im_grünen_Wald";
             const existingSpeakersSelect = document.getElementById('existingSpeakers');
             const allSpeakersSelect = document.getElementById('allSpeakers');
             const generateButton = document.getElementById('generateButton');
             const generationStatus = document.getElementById('generationStatus');
-            const language = "{{language}}";
+            const language = "de";
 
             const speakerData = document.getElementById('speakerData');
             const existingSpeakersJson = speakerData.getAttribute('data-existing-speakers');
@@ -184,7 +162,7 @@
                             existingSpeakersSelect.value = speaker;
                         } else {
                             generationStatus.textContent = "Error generating audio: " + data
-                                .message;
+                            .message;
                         }
                     })
                     .catch(error => {

@@ -11,6 +11,7 @@ from llama_cpp import Llama
 import warnings
 import chevron
 import logging
+import random
 
 warnings.filterwarnings("ignore", message="The attention mask is not set and cannot be inferred from input because pad token is same as eos token.")
 
@@ -27,33 +28,64 @@ app.logger.setLevel(logging.DEBUG)
 
 logging.basicConfig(level=logging.DEBUG)
 
+# Ensure the necessary directories exist
+os.makedirs(os.path.join(app.root_path, '..', 'static', 'audio'), exist_ok=True)
+os.makedirs(os.path.join(app.root_path, '..', 'config'), exist_ok=True)
+
+# Global variables to store the generated story and title
+TITLE = ""
+TEXT = ""
+
+# At the top of your file, keep this dictionary
+LANGUAGE_CODES = {
+    'English': 'en', 'Spanish': 'es', 'French': 'fr', 'German': 'de', 'Italian': 'it',
+    'Portuguese': 'pt', 'Polish': 'pl', 'Turkish': 'tr', 'Russian': 'ru', 'Dutch': 'nl',
+    'Czech': 'cs', 'Arabic': 'ar', 'Chinese': 'zh-cn', 'Japanese': 'ja', 'Hungarian': 'hu',
+    'Korean': 'ko'
+}
+
+# Define LANGUAGE as a global variable with a default value
+LANGUAGE = 'en'
+
+# Set story parameters
+topic = "wizards and elephants"
+word_count = ["150", "450", "750", "1500", "2250", "3000", "4500"] # [1, 3, 5, 10, 15, 20, 30] min
+main_character = ["Liam", "Olivia", "Noah", "Emma", "Aiden", "Amelia", "Sophia", "Jackson", "Ava", 
+                  "Lucas", "Mohammed", "Fatima", "Ali", "Aisha", "Hassan", "Aya", "Yusuf", "Mei", "Hiroshi", 
+                  "Sakura", "Ethan", "Mia", "James", "Harper", "Benjamin", "Evelyn", "Elijah", "Abigail", 
+                  "Logan", "Emily", "Alexander", "Ella", "Sebastian", "Elizabeth", "William", "Sofia", 
+                  "Daniel", "Avery", "Matthew", "Scarlett", "Henry", "Grace", "Michael", "Chloe", "Jackson", 
+                  "Victoria", "Samuel", "Riley", "David", "Aria", "José", "María", "Juan", "Ana", "Mateo", 
+                  "Santiago", "Valentina", "Lucía"]
+setting = ["in the forest", "on an island", "on the moon", "in a medieval village", "under the sea", "in a magical kingdom",
+           "in a jungle", "in a spaceship", "in a circus", "in a pirate ship", "in a futuristic city", "in a candy land", ]
+age = 2 # 0: "0-2", 1: "2-5", 2: "5-7", 3: "7-12"
+age_groups_authors = {
+    "0-2": ["Eric Carle", "Sandra Boynton", "Margaret Wise Brown", "Karen Katz", "Leslie Patricelli"],
+    "2-5": ["Dr. Seuss", "Julia Donaldson", "Beatrix Potter", "Maurice Sendak", "Eric Carle"],
+    "5-7": ["Roald Dahl", "Mo Willems", "Dav Pilkey", "E.B. White", "Beverly Cleary"],
+    "7-12": ["J.K. Rowling", "Rick Riordan", "Jeff Kinney", "Roald Dahl", "C.S. Lewis"]
+}
+moral = ["friendship", "diversity", "empathy", "respect", "courage", "honesty", "teamwork", "kindness", "integrity"]
+
+
 # Load Llama model
 model_directory = '../model/'
 model_name = "textgen.gguf"
 llm = Llama(model_path=os.path.join(model_directory, model_name),
-            n_threads=4,
-            n_ctx=4096,
-            temperature=1.1,
-            top_p=0.95,
+            n_threads=8,
+            n_ctx=8192,
+            #temperature=1.1
+            seed = -1,
+            #top_p=0.95,
             verbose=False,
-            stop=["The end."])
-
-# Define language
-LANGUAGE = 'de'.lower().replace(' ', '_')
+            #stop=["The end."]
+            )
 
 # Initialize TTS with the XTTS v2 model
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model_name = 'tts_models/multilingual/multi-dataset/xtts_v2'
 tts = TTS(model_name=model_name, progress_bar=False, gpu=torch.cuda.is_available())
-
-# Ensure the necessary directories exist
-os.makedirs(os.path.join(app.root_path, '..', 'static', 'audio'), exist_ok=True)
-os.makedirs(os.path.join(app.root_path, '..', 'config'), exist_ok=True)
-os.makedirs(os.path.join(app.root_path, '..', 'static', 'story'), exist_ok=True)
-
-# Global variables to store the generated story and title
-TITLE = ""
-TEXT = ""
 
 def sanitize_filename(filename):
     sanitized = re.sub(r'[\\/*?:"<>|]', "", filename)
@@ -139,34 +171,129 @@ def index():
 @app.route('/generate-story', methods=['POST'])
 def generate_story():
     data = request.json
-    topic = data.get('topic', "happy animals")
-    age_range = data.get('age_range', "3 and 6")
-    word_count = data.get('word_count', 50)
+    topic = data.get('topic', "").strip() or "happy animals"
+    child_age = data.get('child_age', 2)
+    word_count = data.get('word_count')
     speaker = data.get('speaker')
-    language = data.get('language', LANGUAGE)
+    language_name = data.get('language_name', 'English')
+    language_code = data.get('language_code', 'en')
+    user_main_character = data.get('main_character', "").strip()
+    user_setting = data.get('setting', "").strip()
+    prompt_user = data.get('user_prompt', "").strip()
+    selected_moral_lessons = data.get('moral_lessons', [])
 
     if not speaker:
         return jsonify({"error": "Speaker is required"}), 400
 
-    ending = "The end."
-    constrains = "Only use appropriate sources for children."
+    # Use user's input for main character if provided, otherwise randomly select from the list
+    story_main_character = user_main_character if user_main_character else random.choice(main_character)
 
-    prompt = f"""Write a bedtime story for children about {topic} in German. {constrains} Start with a meaningful title for the story of maximal five words.
-                Do not include the word title nor any special characters. 
-                The story should be understandable for kids with an age between {age_range} years. 
-                The story should be about 50 words long and end with saying '{ending}'."""
+    # Use user's input for setting if provided, otherwise randomly select from the list
+    story_setting = user_setting if user_setting else random.choice(setting)
+    
+    # Update the global LANGUAGE variable
+    LANGUAGE = language_code.lower().replace(' ', '_')
 
-    output = llm.create_chat_completion(messages=[
-        {"role": "system", "content": "You are a story writing assistant."},
-        {"role": "user", "content": prompt}
-    ])
+    # Determine the age range and authors based on child_age
+    age_ranges = ["0-2", "2-5", "5-7", "7-12"]
+    age_range = age_ranges[child_age - 1]
+    authors = age_groups_authors[age_range]
+    selected_author = random.choice(authors)
 
-    story = output["choices"][0]['message']['content']
-    title = story.split('\n')[0].strip()
+    # Generate a title
+    title_prompt = f"Generate a title for a story about {topic} with a maximum of 6 words and no special characters."
+    title_output = llm.create_chat_completion(
+        messages=[
+            {"role": "system", "content": "You are a title generation assistant."},
+            {"role": "user", "content": title_prompt}
+        ]
+    )
+    
+    title = title_output["choices"][0]['message']['content'].strip()
+    
+    # Validate title: remove special characters and limit to 6 words
+    title = re.sub(r'[^\w\s]', '', title)  # Remove special characters
+    title_words = title.split()
+    
+    if len(title_words) > 6:
+        title = ' '.join(title_words[:6])  # Limit to first 6 words
+
+    # Create the moral lessons part of the prompt only if lessons were selected
+    moral_lessons_prompt = ""
+    if selected_moral_lessons:
+        moral_lessons_string = ", ".join(selected_moral_lessons)
+        moral_lessons_prompt = f"The story should incorporate moral lesson(s) about the importance of {moral_lessons_string}."
+                                                                   
+    # Use the full language name for the story generation
+    language = language_name
+
+    # Set initial prompt
+    prompt_user = ""
+
+    prompt_initial = f"""
+    Develop a prompt that enables large language models to create engaging and age-appropriate stories for children in {language_name}.
+    Include and enhance this prompt in your prompt generation: {prompt_user}. Do not ignore this. 
+    Generate an entire story with approximately {word_count} words for children aged {age_range} about {topic} with a playful tone and narrative writing style like {selected_author}. 
+    Start with a meaningful title: {title}.
+    The main character is {user_main_character or random.choice(main_character)}. The story takes place {user_setting or random.choice(setting)}.
+    The story should be set in a world that is both familiar and unknown to the child reader. 
+    {moral_lessons_prompt}
+    End the story with the saying: "The end!"
+    """
+
+    # Prompt generation
+    output = llm.create_chat_completion(
+        messages=[
+            {"role": "system", "content": """
+             You are an assistant specialized in creating prompts for large language models. 
+             Your focus is on generating prompts that helps large language models craft stories specifically for children.
+             Your task is to generate prompts exclusively. Do not write stories and do not ask questions.
+             """},
+            {"role": "user", "content": prompt_initial}
+        ],
+        temperature=0.9,
+        top_p=0.95,
+        top_k=50,
+        min_p=0.05,
+        typical_p=1.0,
+        repeat_penalty=1.1
+    )
+
+    prompt = output["choices"][0]['message']['content']
+
+    # Story generation
+    output_1 = llm.create_chat_completion(
+        messages=[
+            {"role": "system", "content": """
+             You are a creative story writing assistant dedicated to crafting appropriate stories for children. 
+             Your goal is to write narratives with surprising twists and happy endings.
+             Easy to follow and understand, with a clear beginning, middle, and end.  
+             Use only child-appropriate sources, and ensure the content is gender-neutral, inclusive, and ethically sound. 
+             Adhere to ethical guidelines and avoid perpetuating harmful biases.
+             Ensure that all produced stories exclude content related to hate, self-harm, sexual themes, and violence.
+             Only generate the story, nothing else and always begin with a title for the story. 
+             Start directly with the title and do not write something like this: "Here is a 200-word story for children aged 2-5 with a playful tone:"
+             """},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=1.2,
+        top_p=0.95,
+        top_k=100,
+        min_p=0.05,
+        typical_p=1.0,
+        repeat_penalty=1.1
+    )
+
+    story = output_1["choices"][0]['message']['content']
+
+    # Extract title and text
+    lines = story.split('\n', 1)
+    title = lines[0].strip()
+    text = lines[1].strip() if len(lines) > 1 else ""
 
     global TITLE, TEXT
     TITLE = title
-    TEXT = story
+    TEXT = text
 
     return jsonify({
         "success": True,
@@ -399,6 +526,41 @@ def test():
 def handle_exception(e):
     logging.error(f"Unhandled exception: {str(e)}", exc_info=True)
     return jsonify({'success': False, 'error': 'An unexpected error occurred'}), 500
+
+# Define the path to the child.json file
+CHILD_JSON_PATH = os.path.join('built', 'config', 'child.json')
+
+@app.route('/save-child-info', methods=['POST'])
+def save_child_info():
+    data = request.json
+    child_name = data.get('childName')
+    child_age = data.get('childAge')
+    language = data.get('language')
+
+    try:
+        # Check if the file exists, if not, create an empty dictionary
+        if os.path.exists(CHILD_JSON_PATH):
+            with open(CHILD_JSON_PATH, 'r') as f:
+                child_data = json.load(f)
+        else:
+            child_data = {}
+
+        # Update or add the child's information
+        child_data[child_name] = {
+            'age': child_age,
+            'language': language
+        }
+
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(CHILD_JSON_PATH), exist_ok=True)
+
+        # Write the updated data back to the file
+        with open(CHILD_JSON_PATH, 'w') as f:
+            json.dump(child_data, f, indent=2)
+
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000, use_reloader=False, threaded=False)
