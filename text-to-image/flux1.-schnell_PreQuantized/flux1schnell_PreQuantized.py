@@ -5,6 +5,8 @@
 
 import torch
 
+import accelerate
+
 from optimum.quanto import freeze, qfloat8, quantize
 
 from diffusers.models.transformers.transformer_flux import FluxTransformer2DModel
@@ -15,8 +17,11 @@ from transformers import T5EncoderModel
 # define saving path for downloaded models
 cache_dir = '../../models/text-to-image/flux.1-schnell'
 
-model = "black-forest-labs/FLUX.1-schnell" # official model flux1.-schnell from Blackforest
+model = "black-forest-labs/FLUX.1-schnell" # official model flux1.-schnell from Blackforest (not quantized)
 model_tr = "https://huggingface.co/Kijai/flux-fp8/blob/main/flux1-schnell-fp8.safetensors" # quantized transformer from Hugginface
+
+# identify which device is used (cuda = GPU, cpu = CPU only, mps = Mac)
+device: str = 'cuda' if torch.cuda.is_available() else ('mps' if torch.backends.mps.is_available() else 'cpu')
 
 # load and quantize transformer
 transformer = FluxTransformer2DModel.from_single_file(model_tr, 
@@ -43,7 +48,13 @@ pipe = FluxPipeline.from_pretrained(model,
 )
 pipe.transformer = transformer
 pipe.text_encoder_2 = text_encoder_2
-pipe.to(torch.device('cpu'))
+pipe.to(device)
+
+if device == 'cuda':
+    pipe.enable_model_cpu_offload() # offloads modules to CPU on a submodule level (rather than model level)
+    # pipe.enable_sequential_cpu_offload() # when using non-quantized versions to make it run with VRAM 4-32 GB
+    # pipe.vae.enable_slicing() # when using non-quantized versions to make it run with VRAM 4-32 GB
+    # pipe.vae.enable_tiling() # when using non-quantized versions to make it run with VRAM 4-32 GB
 
 # define parameters for the image
 prompt = "Ancient soldier with a sword and a shield. Behind there are horses. In the background there is a mountain with snow."
