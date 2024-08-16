@@ -59,8 +59,8 @@ if device == 'cuda':
 # define parameters for the image
 prompt = "Ancient soldier with a sword and a shield. Behind there are horses. In the background there is a mountain with snow."
 height, width = 128, 128
-num_inference_steps = 2  # number of iterations, 4 gives decent results and should be considered as minimum; people on hugging face and git hub ~15-50 iterations
-generator = torch.Generator("cpu").manual_seed(12345) # set seed for repeatable results
+num_inference_steps = 4  # number of iterations, 4 gives decent results and should be considered as minimum; people on hugging face and git hub ~15-50 iterations
+generator = torch.Generator(device).manual_seed(12345) # set seed for repeatable results
 
 image = pipe(
     prompt=prompt,
