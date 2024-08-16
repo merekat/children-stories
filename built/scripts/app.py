@@ -13,6 +13,8 @@ import chevron
 import logging
 import random
 from datetime import datetime
+import wave
+from pydub import AudioSegment
 
 warnings.filterwarnings("ignore", message="The attention mask is not set and cannot be inferred from input because pad token is same as eos token.")
 
@@ -199,6 +201,7 @@ def generate_story():
     
     # Update the global LANGUAGE variable
     LANGUAGE = language_code.lower().replace(' ', '_')
+    app.logger.info(f"Language set to: {LANGUAGE}")
 
     # Determine the age range and authors based on child_age
     age_ranges = ["0-2", "2-5", "5-7", "7-12"]
@@ -313,17 +316,21 @@ def process_text():
     title = request.args.get('title', default='', type=str)
     generate_audio = request.args.get('generate_audio', default='false', type=str).lower() == 'true'
 
+    app.logger.info(f"Processing text for speaker: {speaker}, title: {title}, generate_audio: {generate_audio}")
+
     if not speaker or not title:
         return jsonify({"error": "Speaker and title are required"}), 400
 
-    global TEXT, TITLE
+    global TEXT, TITLE, LANGUAGE
 
-    # Use the sanitized title for processing
     sanitized_title = sanitize_filename(title)
     story_text = TEXT if TITLE == title else get_story_by_title(sanitized_title)
     
     if not story_text:
+        app.logger.error(f"Story not found for title: {sanitized_title}")
         return jsonify({"error": "Story not found"}), 404
+
+    app.logger.info(f"Story text retrieved, length: {len(story_text)}")
 
     text_chunks = split_text(story_text)
     results = []
@@ -333,8 +340,24 @@ def process_text():
         if generate_audio:
             audio_filename = f"{speaker}_{LANGUAGE}_{sanitized_title}_{i+1}.wav"
             audio_path = os.path.join(app.root_path, '..', 'static', 'audio', audio_filename)
-            tts.tts_to_file(text=chunk, file_path=audio_path, speaker_wav=os.path.join(app.root_path, '..', 'audio', f'{speaker}.wav'), language=LANGUAGE)
-            audio_url = f"/built/static/audio/{audio_filename}"
+            app.logger.info(f"Generating audio for chunk {i+1} at: {audio_path}")
+            
+            try:
+                speaker_wav = os.path.join(app.root_path, '..', 'audio', f'{speaker}.wav')
+                if not os.path.exists(speaker_wav):
+                    raise FileNotFoundError(f"Speaker audio file not found: {speaker_wav}")
+                
+                tts.tts_to_file(text=chunk, file_path=audio_path, speaker_wav=speaker_wav, language=LANGUAGE)
+                
+                if not os.path.exists(audio_path):
+                    raise FileNotFoundError(f"Generated audio file not found: {audio_path}")
+                
+                app.logger.info(f"Audio generated successfully for chunk {i+1}")
+                audio_url = f"/built/static/audio/{audio_filename}"
+            except Exception as e:
+                app.logger.error(f"Error generating audio for chunk {i+1}: {str(e)}", exc_info=True)
+                audio_url = None
+            
             audio_files.append({"text": chunk, "audio": audio_url})
         else:
             audio_url = None
@@ -379,13 +402,25 @@ def generate_audio():
 
     return jsonify({"success": True, "audio_files": audio_files})
 
+
 def generate_audio_for_speaker(speaker, language, title, text):
     try:
         app.logger.info(f"Starting audio generation for speaker: {speaker}, title: {title}")
 
         speaker_wav = os.path.join(app.root_path, '..', 'audio', f'{speaker}.wav')
+        app.logger.info(f"Looking for speaker audio file at: {speaker_wav}")
+        
         if not os.path.exists(speaker_wav):
             app.logger.error(f"Speaker audio file does not exist: {speaker_wav}")
+            return False, []
+
+        # Verify the speaker audio file
+        try:
+            with wave.open(speaker_wav, 'rb') as wav_file:
+                params = wav_file.getparams()
+                app.logger.info(f"Speaker audio file params: {params}")
+        except wave.Error as e:
+            app.logger.error(f"Error verifying speaker audio file: {e}")
             return False, []
 
         chunks = split_text(text)
@@ -396,12 +431,32 @@ def generate_audio_for_speaker(speaker, language, title, text):
         for i, chunk in enumerate(chunks):
             audio_filename = f"{speaker}_{language}_{sanitized_title}_{i+1}.wav"
             audio_path = os.path.join(app.root_path, '..', 'static', 'audio', audio_filename)
+            app.logger.info(f"Attempting to generate audio file: {audio_path}")
 
-            tts.tts_to_file(text=chunk, file_path=audio_path, speaker_wav=speaker_wav, language=language)
-            app.logger.info(f"Generated audio file: {audio_filename}")
+            try:
+                tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2", progress_bar=False, gpu=torch.cuda.is_available())
+                tts.tts_to_file(text=chunk, file_path=audio_path, speaker_wav=speaker_wav, language=language)
+                
+                # Verify the generated audio file
+                with wave.open(audio_path, 'rb') as wav_file:
+                    params = wav_file.getparams()
+                    app.logger.info(f"Generated audio file params: {params}")
+                
+                app.logger.info(f"Generated audio file: {audio_filename}")
+                
+                if not os.path.exists(audio_path):
+                    app.logger.error(f"Generated audio file not found: {audio_path}")
+                else:
+                    app.logger.info(f"Verified audio file exists: {audio_path}")
+                    audio_files.append({"text": chunk, "audio": f"/built/static/audio/{audio_filename}"})
+            except Exception as e:
+                app.logger.error(f"Error generating audio for chunk {i+1}: {str(e)}", exc_info=True)
+                # If there's an error, we'll skip this chunk and continue with the next one
+                continue
 
-            audio_files.append({"text": chunk, "audio": f"/built/static/audio/{audio_filename}"})
-
+        if not audio_files:
+            app.logger.error("No audio files were successfully generated.")
+            return False, []
 
         app.logger.info("Audio generation completed successfully.")
         return True, audio_files
@@ -456,6 +511,16 @@ def update_speaker_config(speaker):
     app.logger.debug(f"Updated speaker.json with user: {speaker}")
     app.logger.debug(f"Current speaker.json content: {json.dumps(config, indent=2)}")
 
+def convert_to_wav(input_path, output_path):
+    try:
+        audio = AudioSegment.from_file(input_path)
+        audio.export(output_path, format="wav")
+        app.logger.info(f"Audio file converted and saved as: {output_path}")
+        return True
+    except Exception as e:
+        app.logger.error(f"Error converting audio file: {e}")
+        return False
+
 @app.route('/save-audio', methods=['POST'])
 def save_audio():
     try:
@@ -467,17 +532,44 @@ def save_audio():
 
         audio_dir = os.path.join(app.root_path, '..', 'audio')
         os.makedirs(audio_dir, exist_ok=True)
+        temp_path = os.path.join(audio_dir, f'temp_{speaker}.wav')
         audio_path = os.path.join(audio_dir, f'{speaker}.wav')
 
-        audio_file.save(audio_path)
+        app.logger.info(f"Saving temporary audio file to: {temp_path}")
+        audio_file.save(temp_path)
 
-        update_speaker_config(speaker)  # Ensure this is called
+        # Try to convert the audio file
+        if not convert_to_wav(temp_path, audio_path):
+            os.remove(temp_path)
+            return jsonify({'success': False, 'error': 'Failed to convert audio file'}), 400
+
+        os.remove(temp_path)  # Remove the temporary file
+
+        # Verify the saved audio file
+        try:
+            with wave.open(audio_path, 'rb') as wav_file:
+                params = wav_file.getparams()
+                app.logger.info(f"Audio file params: {params}")
+        except wave.Error as e:
+            app.logger.error(f"Error verifying audio file: {e}")
+            os.remove(audio_path)  # Remove the invalid file
+            return jsonify({'success': False, 'error': 'Invalid WAV file format'}), 400
+
+        update_speaker_config(speaker)
+
+        app.logger.info(f"Audio file saved and verified at: {audio_path}")
 
         return jsonify({'success': True, 'message': f'Audio saved as {audio_path}'})
     except Exception as e:
         app.logger.error(f"Error saving audio: {e}", exc_info=True)
+        # Clean up any temporary files if they exist
+        if 'temp_path' in locals() and os.path.exists(temp_path):
+            os.remove(temp_path)
+        if 'audio_path' in locals() and os.path.exists(audio_path):
+            os.remove(audio_path)
         return jsonify({'success': False, 'error': str(e)}), 500
-    
+
+
 def update_story_json(sanitized_title, new_speaker, language=None, text=None):
     try:
         story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
