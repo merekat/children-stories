@@ -30,8 +30,13 @@ app.logger.setLevel(logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
 
 # Ensure the necessary directories exist
-os.makedirs(os.path.join(app.root_path, '..', 'static', 'audio'), exist_ok=True)
+os.makedirs(os.path.join(app.root_path, '..', 'audio'), exist_ok=True)
 os.makedirs(os.path.join(app.root_path, '..', 'config'), exist_ok=True)
+os.makedirs(os.path.join(app.root_path, '..', 'model'), exist_ok=True)
+os.makedirs(os.path.join(app.root_path, '..', 'static', 'audio'), exist_ok=True)
+os.makedirs(os.path.join(app.root_path, '..', 'static', 'story'), exist_ok=True)
+os.makedirs(os.path.join(app.root_path, '..', 'static', 'image'), exist_ok=True)
+
 
 # Global variables to store the generated story and title
 TITLE = ""
