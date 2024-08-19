@@ -18,19 +18,44 @@ ChildGPT is an innovative application that creates custom children's stories bas
    ```
 
 2. **Activate the Environment**
-
+   Requirements: Python 3.11.3
+   
+   For Mac:
    ```bash
-   python -m .venv venv
-   source venv/bin/activate
+   pyenv install 3.11.3
+   pyenv local 3.11.3
+   python -m venv .venv
+   source .venv/bin/activate
    ```
+   
+   For Windows with `PowerShell` CLI :
 
-3. **Install Dependencies**
+    ```PowerShell
+    pyenv local 3.11.3
+    python -m venv .venv
+    .venv\Scripts\Activate.ps1
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+    ```
+
+    For Windows with `Git-bash` CLI :
+  
+    ```BASH
+    pyenv local 3.11.3
+    python -m venv .venv
+    source .venv/Scripts/activate
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+    ```
+
+4. **Install Dependencies**
 
    ```bash
+   pip install pip==24.1.2
    pip install -r requirements.txt
     ```
 
-4. **Download and Prepare Models**
+5. **Download and Prepare Models**
 *   Ensure you have the model files in the built/model directory.
 *   Run text_generation.py to download and train prebuilt text generation model Lama. This might take some time.
    

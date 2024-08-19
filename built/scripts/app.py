@@ -15,6 +15,7 @@ import random
 from datetime import datetime
 import wave
 from pydub import AudioSegment
+import multiprocessing
 
 warnings.filterwarnings("ignore", message="The attention mask is not set and cannot be inferred from input because pad token is same as eos token.")
 
@@ -79,9 +80,9 @@ moral = ["friendship", "diversity", "empathy", "respect", "courage", "honesty", 
 
 # Load Llama model
 model_directory = '../model/'
-model_name_text = "textgen.gguf"
-llm = Llama(model_path=os.path.join(model_directory, model_name_text),
-            n_threads=8,
+model_name = "textgen.gguf"
+llm = Llama(model_path=os.path.join(model_directory, model_name),
+            n_threads=multiprocessing.cpu_count(),
             n_ctx=8192,
             #temperature=1.1
             seed = -1,
@@ -91,7 +92,7 @@ llm = Llama(model_path=os.path.join(model_directory, model_name_text),
             )
 
 # Initialize TTS with the XTTS v2 model
-device = "cuda" if torch.cuda.is_available() else "cpu"
+device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 model_name = 'tts_models/multilingual/multi-dataset/xtts_v2'
 tts = TTS(model_name=model_name, progress_bar=False, gpu=torch.cuda.is_available())
 
