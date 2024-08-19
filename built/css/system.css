@@ -20,6 +20,9 @@
    --color-second-h: 138;
    --color-second-s: 26%;
    --color-second-l: 60%;
+   --color-action-h: 138;
+   --color-action-s: 26%;
+   --color-action-l: 60%;
 }
 
 body {
@@ -682,6 +685,11 @@ a:focus {
     outline-offset: 5px;
 }
 
+#gallery-container a:focus {
+    outline: none;
+    outline-offset: 5px;
+}
+
 a:visited {
     color: var(--color-first-dark-5);
 }
@@ -720,17 +728,17 @@ a:visited {
 /*  =================== MARKER =================== */
 
 ::-moz-selection {
-    background: var(--color-action);
+    background: transparent;
     color: var(--white);
 }
 
 ::selection {
-    background: var(--color-action);
+    background: transparent;
     color: var(--white);
 }
 
 ::-moz-selection {
-    background: var(--color-action);
+    background: transparent;
     color: var(--white);
 }
 
@@ -1097,6 +1105,10 @@ button:focus {
     outline: none;
     box-shadow: 0 0 0 5px var(--white),
         0 0 0 10px var(--color-action);
+}
+
+button.play-button:focus {
+    box-shadow: none;
 }
 
 ::-moz-focus-inner {
