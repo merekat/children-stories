@@ -145,6 +145,10 @@ def generate_story_html(title, chunks, audio_files, language):
         all_speakers = json.load(f).get('speakers', [])
     
     sanitized_title = sanitize_filename(title)
+    
+    # Use the original title for display, not the sanitized one
+    display_title = html.unescape(title)
+    
     story_entry = next((item for item in story_data if item["title"] == sanitized_title), None)
     existing_speakers = story_entry["speaker"] if story_entry else []
     languages = story_entry["language"] if story_entry else []
@@ -155,21 +159,31 @@ def generate_story_html(title, chunks, audio_files, language):
     existing_speakers_json = json.dumps(existing_speakers)
     all_speakers_json = json.dumps(all_speakers)
 
+    # Use the first existing speaker, or 'standard' if none exists
+    initial_speaker = existing_speakers[0] if existing_speakers else 'standard'
+
     data = {
-        'title': html.escape(title),
-        'sanitized_title': sanitized_title, 
-        'chunks': [
-            {'text': html.escape(chunk), 'audio': audio_file, 'index': i + 1}
-            for i, (chunk, audio_file) in enumerate(zip(chunks, audio_files))
-        ],
-        'story_json_path': '../../config/story.json',
+        'title': display_title,  # Use the unsanitized title for display
+        'sanitized_title': sanitized_title,
         'language': language,
+        'chunks': [
+            {
+                'text': html.escape(chunk),
+                'audio': f"/built/static/audio/{initial_speaker}_{language}_{sanitized_title}_{i + 1}.wav",
+                'index': i + 1
+            }
+            for i, chunk in enumerate(chunks)
+        ],
         'existing_speakers_json': existing_speakers_json,
         'all_speakers_json': all_speakers_json,
-        'languages': languages
+        'existing_speakers': existing_speakers,
+        'all_speakers': all_speakers
     }
 
     story_html = chevron.render(template, data)
+
+    # Optional: Remove any remaining {{variables}} that weren't replaced
+    story_html = re.sub(r'\{\{.*?\}\}', '', story_html)
 
     return story_html
 
@@ -183,9 +197,9 @@ def generate_story():
     topic = data.get('topic', "").strip() or "happy animals"
     child_age = data.get('child_age', 2)
     word_count = data.get('word_count')
-    speaker = data.get('speaker')
-    language_name = data.get('language_name', 'English')
+    speaker = data.get('speaker', 'standard')
     language_code = data.get('language_code', 'en')
+    language_name = data.get('language_name', 'English')
     user_main_character = data.get('main_character', "").strip()
     user_setting = data.get('setting', "").strip()
     prompt_user = data.get('user_prompt', "").strip()
@@ -201,6 +215,7 @@ def generate_story():
     story_setting = user_setting if user_setting else random.choice(setting)
     
     # Update the global LANGUAGE variable
+    global LANGUAGE
     LANGUAGE = language_code.lower().replace(' ', '_')
     app.logger.info(f"Language set to: {LANGUAGE}")
 
@@ -211,7 +226,7 @@ def generate_story():
     selected_author = random.choice(authors)
 
     # Generate a title
-    title_prompt = f"Generate a title for a story about {topic} with a maximum of 6 words and no special characters."
+    title_prompt = f"Generate a title for a story about {topic} with a maximum of 6 words and no special characters or asterisks."
     title_output = llm.create_chat_completion(
         messages=[
             {"role": "system", "content": "You are a title generation assistant."},
@@ -245,7 +260,7 @@ def generate_story():
     Include and enhance this prompt in your prompt generation: {prompt_user}. Do not ignore this. 
     Generate an entire story with approximately {word_count} words for children aged {age_range} about {topic} with a playful tone and narrative writing style like {selected_author}. 
     Start with a meaningful title: {title}.
-    The main character is {user_main_character or random.choice(main_character)}. The story takes place {user_setting or random.choice(setting)}.
+    The main character is {story_main_character}. The story takes place {story_setting}.
     The story should be set in a world that is both familiar and unknown to the child reader. 
     {moral_lessons_prompt}
     End the story with the saying: "The end!"
@@ -274,15 +289,15 @@ def generate_story():
     # Story generation
     output_1 = llm.create_chat_completion(
         messages=[
-            {"role": "system", "content": """
-             You are a creative story writing assistant dedicated to crafting appropriate stories for children. 
+            {"role": "system", "content": f"""
+             You are a creative story writing assistant dedicated to crafting appropriate stories for children in {language_name}. 
              Your goal is to write narratives with surprising twists and happy endings.
              Easy to follow and understand, with a clear beginning, middle, and end.  
              Use only child-appropriate sources, and ensure the content is gender-neutral, inclusive, and ethically sound. 
              Adhere to ethical guidelines and avoid perpetuating harmful biases.
              Ensure that all produced stories exclude content related to hate, self-harm, sexual themes, and violence.
              Only generate the story, nothing else and always begin with a title for the story. 
-             Start directly with the title and do not write something like this: "Here is a 200-word story for children aged 2-5 with a playful tone:"
+             Start directly with the title without using special characters and do not write something like this: "Here is a 200-word story for children aged 2-5 with a playful tone:"
              """},
             {"role": "user", "content": prompt}
         ],
@@ -305,9 +320,13 @@ def generate_story():
     TITLE = title
     TEXT = text
 
+    sanitized_title = sanitize_filename(title)
+
     return jsonify({
         "success": True,
         "title": title,
+        "sanitized_title": sanitized_title,
+        "language": LANGUAGE,
         "audio_files": []
     }), 200
 
@@ -315,6 +334,7 @@ def generate_story():
 def process_text():
     speaker = request.args.get('speaker', default='', type=str)
     title = request.args.get('title', default='', type=str)
+    language = request.args.get('language', default='en', type=str)
     generate_audio = request.args.get('generate_audio', default='false', type=str).lower() == 'true'
 
     app.logger.info(f"Processing text for speaker: {speaker}, title: {title}, generate_audio: {generate_audio}")
