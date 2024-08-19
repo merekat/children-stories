@@ -325,6 +325,7 @@ $(document).ready(function () {
                 return response.json();
             })
             .then(data => {
+                console.log('Received data:', data);
                 // Create the content div 
                 let contentDiv = $('#content');
                 if (contentDiv.length === 0) {
