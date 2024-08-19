@@ -129,7 +129,7 @@ def split_text(text, max_chars=250, max_sentences=5):
         chunks.append(' '.join(current_chunk))
     return chunks
 
-def generate_story_html(title, chunks, audio_files, language):
+def generate_story_html(original_title, sanitized_title, chunks, audio_files, language):
     template_path = os.path.join(app.root_path, '..', 'template', 'template.html')
     
     with open(template_path, 'r', encoding='utf-8') as template_file:
@@ -144,10 +144,11 @@ def generate_story_html(title, chunks, audio_files, language):
     with open(speaker_json_path, 'r') as f:
         all_speakers = json.load(f).get('speakers', [])
     
-    sanitized_title = sanitize_filename(title)
+    # Remove this line as sanitized_title is already passed as an argument
+    # sanitized_title = sanitize_filename(title)
     
-    # Use the original title for display, not the sanitized one
-    display_title = html.unescape(title)
+    # Use the original_title passed as an argument, not a 'title' variable
+    display_title = html.unescape(original_title)
     
     story_entry = next((item for item in story_data if item["title"] == sanitized_title), None)
     existing_speakers = story_entry["speaker"] if story_entry else []
@@ -163,7 +164,7 @@ def generate_story_html(title, chunks, audio_files, language):
     initial_speaker = existing_speakers[0] if existing_speakers else 'standard'
 
     data = {
-        'title': display_title,  # Use the unsanitized title for display
+        'title': display_title,  # Use the display_title (unescaped original_title) for display
         'sanitized_title': sanitized_title,
         'language': language,
         'chunks': [
@@ -313,7 +314,7 @@ def generate_story():
 
     # Extract title and text
     lines = story.split('\n', 1)
-    title = lines[0].strip()
+    original_title = lines[0].strip()  
     text = lines[1].strip() if len(lines) > 1 else ""
 
     global TITLE, TEXT
@@ -321,6 +322,9 @@ def generate_story():
     TEXT = text
 
     sanitized_title = sanitize_filename(title)
+    update_story_json(sanitized_title, original_title, speaker, LANGUAGE, TEXT)
+    app.logger.info(f"Generated story with original title: {original_title}")
+    app.logger.info(f"Sanitized title: {sanitized_title}")
 
     return jsonify({
         "success": True,
@@ -389,7 +393,9 @@ def process_text():
         })
 
     # Update story.json with the new story data
-    update_story_json(sanitized_title, speaker, LANGUAGE, story_text)
+    #update_story_json(sanitized_title, speaker, LANGUAGE, story_text)
+
+    update_story_json(sanitized_title, title, speaker, LANGUAGE, TEXT)
 
     # Generate and save the HTML file
     save_story_html(sanitized_title, text_chunks, [af["audio"] for af in audio_files], LANGUAGE)
@@ -487,12 +493,19 @@ def generate_audio_for_speaker(speaker, language, title, text):
 
 def get_story_by_title(title):
     story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
+    app.logger.info(f"Searching for story in: {story_json_path}")
     if os.path.exists(story_json_path):
         with open(story_json_path, 'r') as f:
             story_data = json.load(f)
-        story_entry = next((item for item in story_data if item["title"].lower() == title.lower()), None)
-        if story_entry and "text" in story_entry:
-            return story_entry["text"]
+        app.logger.info(f"Number of stories in story.json: {len(story_data)}")
+        for item in story_data:
+            app.logger.debug(f"Comparing '{item['title'].lower()}' with '{title.lower()}'")
+            if item["title"].lower() == title.lower():
+                app.logger.info(f"Found matching story for title: {title}")
+                return item.get("text")
+        app.logger.error(f"No matching story found for title: {title}")
+    else:
+        app.logger.error(f"Story JSON file not found: {story_json_path}")
     return None
 
 @app.route('/built/static/audio/<path:filename>')
@@ -591,7 +604,7 @@ def save_audio():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-def update_story_json(sanitized_title, new_speaker, language=None, text=None):
+def update_story_json(sanitized_title, original_title, new_speaker, language=None, text=None):
     try:
         story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
         app.logger.debug(f"Updating story.json at: {story_json_path}")
@@ -600,23 +613,24 @@ def update_story_json(sanitized_title, new_speaker, language=None, text=None):
             with open(story_json_path, 'r') as f:
                 story_data = json.load(f)
         else:
+            app.logger.warning(f"story.json not found. Creating new file.")
             story_data = []
 
         existing_entry = next((item for item in story_data if item["title"] == sanitized_title), None)
         if existing_entry:
-            # Ensure the speaker is added correctly
+            app.logger.info(f"Updating existing entry for title: {sanitized_title}")
+            existing_entry["original_title"] = original_title
             if new_speaker and new_speaker not in existing_entry["speaker"]:
                 existing_entry["speaker"].append(new_speaker)
-            # Ensure the language is added correctly
             if language and language not in existing_entry["language"]:
                 existing_entry["language"].append(language)
-            # Ensure the text is updated correctly
             if text:
                 existing_entry["text"] = text
         else:
-            # Create a new entry if the story doesn't exist
+            app.logger.info(f"Creating new entry for title: {sanitized_title}")
             new_entry = {
                 "title": sanitized_title,
+                "original_title": original_title,
                 "text": text or "",
                 "speaker": [new_speaker] if new_speaker else [],
                 "language": [language] if language else []
@@ -625,17 +639,35 @@ def update_story_json(sanitized_title, new_speaker, language=None, text=None):
 
         with open(story_json_path, 'w') as f:
             json.dump(story_data, f, indent=2)
-        app.logger.info(f"Updated story.json with new entry for title: {sanitized_title}")
+        app.logger.info(f"Successfully updated story.json with entry for title: {sanitized_title}")
     except Exception as e:
         app.logger.error(f"Error updating story.json: {e}", exc_info=True)
 
 def save_story_html(sanitized_title, chunks, audio_files, language):
     app.logger.debug(f"Saving HTML for title: {sanitized_title}")
-    story_html = generate_story_html(sanitized_title, chunks, audio_files, language)
+    
+    # Retrieve the original title from the story.json file
+    original_title = get_original_title(sanitized_title)
+    
+    # If original_title is not found, use the sanitized_title but replace underscores with spaces
+    if not original_title:
+        original_title = sanitized_title.replace('_', ' ')
+
+    story_html = generate_story_html(original_title, sanitized_title, chunks, audio_files, language)
     story_html_path = os.path.join(app.root_path, '..', 'static', 'story', f"{sanitized_title}.html")
     with open(story_html_path, 'w', encoding='utf-8') as f:
         f.write(story_html)
     app.logger.info(f"HTML file generated at: {story_html_path}")
+
+def get_original_title(sanitized_title):
+    story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
+    if os.path.exists(story_json_path):
+        with open(story_json_path, 'r') as f:
+            story_data = json.load(f)
+        for story in story_data:
+            if story.get('title') == sanitized_title:
+                return story.get('original_title', sanitized_title.replace('_', ' '))
+    return None
 
 @app.route('/test', methods=['GET'])
 def test():

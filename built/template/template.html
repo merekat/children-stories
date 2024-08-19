@@ -65,6 +65,17 @@
             sanitizedTitle: "{{{sanitized_title}}}",
             language: "{{{language}}}"
         };
+        // Function to replace underscores with spaces
+        function formatTitle(title) {
+            return title.replace(/_/g, ' ');
+        }
+
+        // Apply the formatting when the document is ready
+        $(document).ready(function () {
+            const formattedTitle = formatTitle(storyData.originalTitle);
+            document.title = "Story: " + formattedTitle;
+            $('#storyTitle').text(formattedTitle);
+        });
     </script>
 
     <script src="../../js/story.js"></script>
