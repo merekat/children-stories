@@ -82,7 +82,7 @@ moral = ["friendship", "diversity", "empathy", "respect", "courage", "honesty", 
 model_directory = '../model/'
 model_name = "textgen.gguf"
 llm = Llama(model_path=os.path.join(model_directory, model_name),
-            n_threads=12, # multiprocessing.cpu_count()
+            n_threads=multiprocessing.cpu_count(),
             n_ctx=8192,
             #temperature=1.1
             seed = -1,
