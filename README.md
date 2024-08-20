@@ -18,7 +18,7 @@
 - **Image Generation**: Automatically creates illustrations to accompany the stories.
 - **Interactive Experience**: Engaging storytelling for children, even when parents can't be there in person.
 
-## Try out our app [here](https://) 
+## Try out our app [here](https://github.com/merekat/children-stories/blob/main/app_instruction.md) 
 <font color="red"> Link to app_instruction.md @Michel You are in charge of making this md file </font>
 
 
