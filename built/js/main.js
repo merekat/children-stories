@@ -288,21 +288,16 @@ $(document).ready(function () {
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({
-                topic: topicInput,
-                child_age: childAge,
-                word_count: wordCount,
-                speaker: speaker,
-                language_code: languageCode,
-                language_name: languageName,
-                main_character: mainCharacter,
-                setting: settingInput,
-                user_prompt: userPrompt,
-                moral_lessons: selectedMoralLessons
+                // ... (existing data)
             }),
             success: function (data) {
                 if (data.success) {
                     content.html(`<h2>${data.title}</h2>`);
+                    // Add image placeholder
+                    content.prepend('<div class="story-image-container">Generating image...</div>');
                     displayTextChunks(speaker, data.sanitized_title, languageCode);
+                    // Start image generation after displaying text
+                    generateStoryImage(data.sanitized_title);
                 } else {
                     content.html('<p>Error generating story. Please try again.</p>');
                 }
@@ -335,6 +330,10 @@ $(document).ready(function () {
 
                 contentDiv.empty(); // Clear any existing content
 
+                // Add image placeholder
+                const imagePlaceholder = $('<div></div>').addClass('story-image-container').text('Generating image...');
+                contentDiv.append(imagePlaceholder);
+
                 // Add the title
                 const titleElement = $('<h2></h2>')
                     .addClass('story-title')
@@ -362,6 +361,40 @@ $(document).ready(function () {
                 console.error('Error fetching text chunks:', error);
                 alert('An error occurred while processing the text. Please try again.');
             });
+    }
+
+    function generateStoryImage(sanitizedTitle) {
+        $.ajax({
+            url: `${backendUrl}/generate-image`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                sanitized_title: sanitizedTitle
+            }),
+            success: function (data) {
+                if (data.success) {
+                    displayStoryImage(data.image_path);
+                } else {
+                    console.error('Failed to generate image:', data.error);
+                    $('.story-image-container').text('Failed to generate image');
+                }
+            },
+            error: function (error) {
+                console.error('Error generating image:', error);
+                $('.story-image-container').text('Error generating image');
+            }
+        });
+    }
+
+    function displayStoryImage(imagePath) {
+        const imageContainer = $('.story-image-container');
+        imageContainer.empty(); // Clear any existing content
+        imageContainer.css({
+            'background-image': `url(${imagePath})`,
+            'background-size': 'cover',
+            'background-position': 'center bottom',
+            'background-repeat': 'no-repeat'
+        });
     }
 
     function generateAudioForChunks(speaker, sanitizedTitle, language) {

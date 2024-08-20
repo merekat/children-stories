@@ -8,14 +8,20 @@ flask-cors
 flask-sse
 torch
 pydub
+torchvision
 torchaudio 
 soundfile 
 librosa
 chevron
-torch
 TTS
 flask_cors
 llama-cpp-python
 huggingface-hub
 celery 
 redis
+peft -q # This needs to be check by Deniz
+accelerate
+numpy==1.26.4
+#!pip install git+https://github.com/huggingface/diffusers
+optimum-quanto
+#!pip install transformers --upgrade 
