@@ -1103,8 +1103,7 @@ button[disabled]:visited {
 
 button:focus {
     outline: none;
-    box-shadow: 0 0 0 5px var(--white),
-        0 0 0 10px var(--color-action);
+
 }
 
 button.play-button:focus {

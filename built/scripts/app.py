@@ -1,4 +1,4 @@
-from flask import Flask, Response, send_from_directory, request, jsonify, render_template
+from flask import Flask, send_from_directory, request, jsonify, render_template
 import torch
 import html
 from TTS.api import TTS
@@ -10,12 +10,14 @@ import logging
 from llama_cpp import Llama
 import warnings
 import chevron
-import logging
 import random
 from datetime import datetime
 import wave
 from pydub import AudioSegment
 import multiprocessing
+from diffusers import StableDiffusionXLPipeline, AutoencoderKL
+
+print("GPU available:", torch.cuda.is_available())
 
 warnings.filterwarnings("ignore", message="The attention mask is not set and cannot be inferred from input because pad token is same as eos token.")
 
@@ -24,13 +26,12 @@ app = Flask(__name__, static_url_path='/built', static_folder=os.path.dirname(os
 CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['DEBUG'] = True
 
+
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Use Flask's logger
 app.logger.setLevel(logging.DEBUG)
-
-logging.basicConfig(level=logging.DEBUG)
 
 # Ensure the necessary directories exist
 os.makedirs(os.path.join(app.root_path, '..', 'audio'), exist_ok=True)
@@ -44,8 +45,23 @@ os.makedirs(os.path.join(app.root_path, '..', 'static', 'image'), exist_ok=True)
 # Global variables to store the generated story and title
 TITLE = ""
 TEXT = ""
+LANGUAGE = 'en'
+pipe = None
 
-# At the top of your file, keep this dictionary
+children_story_topics = [
+    "Wizards and Elephants", "Adventures in Magical Forest", "Talking Tree", "Brave Little Dragon",
+    "Secret Garden", "Lost Treasure of Pirate Island", "Enchanted Castle", "Friendly Ghost",
+    "Time-Traveling Kids", "Underwater Kingdom", "Flying Unicorn", "Mysterious Cave",
+    "Little Robot's Big Adventure", "Animal Orchestra", "Magic Paintbrush",
+    "Adventures of Space Explorer", "Fairy and Giant", "Secret of Old Lighthouse",
+    "Jungle Expedition", "Snowy Mountain Rescue", "Little Mermaid's Wish",
+    "Haunted House Mystery", "Adventures of Tiny Dinosaur", "Magic School Bus",
+    "Lost City of Atlantis", "Friendly Alien", "Magical Bookstore", "Adventures of Superhero Kid",
+    "Secret World of Insects", "Little Witch's Potion"
+]
+
+topic = "wizards and elephants" # FIX
+
 LANGUAGE_CODES = {
     'English': 'en', 'Spanish': 'es', 'French': 'fr', 'German': 'de', 'Italian': 'it',
     'Portuguese': 'pt', 'Polish': 'pl', 'Turkish': 'tr', 'Russian': 'ru', 'Dutch': 'nl',
@@ -53,35 +69,38 @@ LANGUAGE_CODES = {
     'Korean': 'ko'
 }
 
-# Define LANGUAGE as a global variable with a default value
-LANGUAGE = 'en'
+word_count = ["150", "450", "750", "1500", "2250", "3000", "4500"] 
 
-# Set story parameters
-topic = "wizards and elephants"
-word_count = ["150", "450", "750", "1500", "2250", "3000", "4500"] # [1, 3, 5, 10, 15, 20, 30] min
-main_character = ["Liam", "Olivia", "Noah", "Emma", "Aiden", "Amelia", "Sophia", "Jackson", "Ava", 
-                  "Lucas", "Mohammed", "Fatima", "Ali", "Aisha", "Hassan", "Aya", "Yusuf", "Mei", "Hiroshi", 
-                  "Sakura", "Ethan", "Mia", "James", "Harper", "Benjamin", "Evelyn", "Elijah", "Abigail", 
-                  "Logan", "Emily", "Alexander", "Ella", "Sebastian", "Elizabeth", "William", "Sofia", 
-                  "Daniel", "Avery", "Matthew", "Scarlett", "Henry", "Grace", "Michael", "Chloe", "Jackson", 
-                  "Victoria", "Samuel", "Riley", "David", "Aria", "José", "María", "Juan", "Ana", "Mateo", 
-                  "Santiago", "Valentina", "Lucía"]
-setting = ["in the forest", "on an island", "on the moon", "in a medieval village", "under the sea", "in a magical kingdom",
+main_character = [
+    "Liam", "Olivia", "Noah", "Emma", "Aiden", "Amelia", "Sophia", "Jackson", "Ava", 
+    "Lucas", "Mohammed", "Fatima", "Ali", "Aisha", "Hassan", "Aya", "Yusuf", "Mei", "Hiroshi", 
+    "Sakura", "Ethan", "Mia", "James", "Harper", "Benjamin", "Evelyn", "Elijah", "Abigail", 
+    "Logan", "Emily", "Alexander", "Ella", "Sebastian", "Elizabeth", "William", "Sofia", 
+    "Daniel", "Avery", "Matthew", "Scarlett", "Henry", "Grace", "Michael", "Chloe", "Jackson", 
+    "Victoria", "Samuel", "Riley", "David", "Aria", "José", "María", "Juan", "Ana", "Mateo", 
+    "Santiago", "Valentina", "Lucía"]
+
+setting = ["in the forest", "on an island", "on the moon", "in a medieval village", 
+           "under the sea", "in a magical kingdom",
            "in a jungle", "in a spaceship", "in a circus", "in a pirate ship", "in a futuristic city", "in a candy land", ]
-age = 2 # 0: "0-2", 1: "2-5", 2: "5-7", 3: "7-12"
+
+age = 2 
+
 age_groups_authors = {
     "0-2": ["Eric Carle", "Sandra Boynton", "Margaret Wise Brown", "Karen Katz", "Leslie Patricelli"],
     "2-5": ["Dr. Seuss", "Julia Donaldson", "Beatrix Potter", "Maurice Sendak", "Eric Carle"],
     "5-7": ["Roald Dahl", "Mo Willems", "Dav Pilkey", "E.B. White", "Beverly Cleary"],
     "7-12": ["J.K. Rowling", "Rick Riordan", "Jeff Kinney", "Roald Dahl", "C.S. Lewis"]
 }
-moral = ["friendship", "diversity", "empathy", "respect", "courage", "honesty", "teamwork", "kindness", "integrity"]
 
+moral = ["friendship", "diversity", "empathy", "respect", "courage", "honesty", "teamwork", 
+         "kindness", "integrity"]
 
 # Load Llama model
+device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 model_directory = '../model/'
 model_name = "textgen.gguf"
-llm = Llama(model_path=os.path.join(model_directory, model_name),
+llm = Llama(model_path=os.path.join(model_directory, model_name), #n_gpu_layers=-1 needs to be added
             n_threads=multiprocessing.cpu_count(),
             n_ctx=8192,
             #temperature=1.1
@@ -91,10 +110,34 @@ llm = Llama(model_path=os.path.join(model_directory, model_name),
             #stop=["The end."]
             )
 
-# Initialize TTS with the XTTS v2 model
+# Loade XTTS v2 model
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 model_name = 'tts_models/multilingual/multi-dataset/xtts_v2'
 tts = TTS(model_name=model_name, progress_bar=False, gpu=torch.cuda.is_available())
+
+# Loade Stable Diffusion model
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+print(f"Using device: {device}")
+vae = AutoencoderKL.from_single_file("../model/imagegen-fix.safetensors", torch_dtype=torch.float16)
+pipe = StableDiffusionXLPipeline.from_single_file(
+    "../model/imagegen-base.safetensors",
+    vae=vae,
+    torch_dtype=torch.float16,
+    variant="fp16",
+    use_safetensors=True
+)
+
+pipe = pipe.to(device)
+
+if device == 'cuda':
+    pipe.enable_sequential_cpu_offload()
+    pipe.enable_vae_slicing()
+    pipe.enable_vae_tiling()
+else:
+    print("GPU not available. Some optimizations will not be applied.")
+
+pipe.safety_checker = None
+pipe.requires_safety_checker = False
 
 def sanitize_filename(filename):
     sanitized = re.sub(r'[\\/*?:"<>|]', "", filename)
@@ -143,11 +186,7 @@ def generate_story_html(original_title, sanitized_title, chunks, audio_files, la
     
     with open(speaker_json_path, 'r') as f:
         all_speakers = json.load(f).get('speakers', [])
-    
-    # Remove this line as sanitized_title is already passed as an argument
-    # sanitized_title = sanitize_filename(title)
-    
-    # Use the original_title passed as an argument, not a 'title' variable
+     
     display_title = html.unescape(original_title)
     
     story_entry = next((item for item in story_data if item["title"] == sanitized_title), None)
@@ -164,7 +203,7 @@ def generate_story_html(original_title, sanitized_title, chunks, audio_files, la
     initial_speaker = existing_speakers[0] if existing_speakers else 'standard'
 
     data = {
-        'title': display_title,  # Use the display_title (unescaped original_title) for display
+        'title': display_title, 
         'sanitized_title': sanitized_title,
         'language': language,
         'chunks': [
@@ -187,6 +226,31 @@ def generate_story_html(original_title, sanitized_title, chunks, audio_files, la
     story_html = re.sub(r'\{\{.*?\}\}', '', story_html)
 
     return story_html
+
+def generate_and_save_story_image(sanitized_title):
+    global pipe, device
+
+    # Use the predefined prompts
+    prompt = "high detail, realistic, forest setting, trees, sunny, rabbits hopping, evil witch, cinematic concept art, 4k resolution, background is orange clouds and snow covered mountains"
+    negative_prompt = "disfigured, ugly, bad, immature, b&w, blurred"
+
+    try:
+            # Generate the image
+            image = pipe(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                num_inference_steps=20,
+            ).images[0]
+
+            # Save the image in the correct static folder
+            image_path = os.path.join(app.root_path, '..', 'static', 'image', f"{sanitized_title}.jpg")
+            os.makedirs(os.path.dirname(image_path), exist_ok=True)
+            image.save(image_path)
+
+            return f"/built/static/image/{sanitized_title}.jpg"
+    except Exception as e:
+            print(f"Error generating image: {str(e)}")
+            return None
 
 @app.route('/')
 def index():
@@ -226,8 +290,11 @@ def generate_story():
     authors = age_groups_authors[age_range]
     selected_author = random.choice(authors)
 
+    # Use the full language name for the story generation
+    language = language_name
+
     # Generate a title
-    title_prompt = f"Generate a title for a story about {topic} with a maximum of 6 words and no special characters or asterisks."
+    title_prompt = f"Generate a title for a story about {topic} in {language} with a maximum of 6 words and no special characters or asterisks."
     title_output = llm.create_chat_completion(
         messages=[
             {"role": "system", "content": "You are a title generation assistant."},
@@ -250,9 +317,6 @@ def generate_story():
         moral_lessons_string = ", ".join(selected_moral_lessons)
         moral_lessons_prompt = f"The story should incorporate moral lesson(s) about the importance of {moral_lessons_string}."
                                                                    
-    # Use the full language name for the story generation
-    language = language_name
-
     # Set initial prompt
     prompt_user = ""
 
@@ -309,7 +373,6 @@ def generate_story():
         typical_p=1.0,
         repeat_penalty=1.1
     )
-
     story = output_1["choices"][0]['message']['content']
 
     # Extract title and text
@@ -318,21 +381,37 @@ def generate_story():
     text = lines[1].strip() if len(lines) > 1 else ""
 
     global TITLE, TEXT
-    TITLE = title
+    TITLE = original_title
     TEXT = text
 
-    sanitized_title = sanitize_filename(title)
+    sanitized_title = sanitize_filename(original_title)
     update_story_json(sanitized_title, original_title, speaker, LANGUAGE, TEXT)
     app.logger.info(f"Generated story with original title: {original_title}")
     app.logger.info(f"Sanitized title: {sanitized_title}")
 
     return jsonify({
         "success": True,
-        "title": title,
+        "title": original_title,
         "sanitized_title": sanitized_title,
         "language": LANGUAGE,
+        "text": TEXT,  # Include the full story text in the response
         "audio_files": []
     }), 200
+
+@app.route('/generate-image', methods=['POST'])
+def generate_image():
+    data = request.json
+    sanitized_title = data.get('sanitized_title')
+    
+    if not sanitized_title:
+        return jsonify({"error": "Sanitized title is required"}), 400
+
+    image_path = generate_and_save_story_image(sanitized_title)
+    
+    if image_path:
+        return jsonify({"success": True, "image_path": image_path})
+    else:
+        return jsonify({"success": False, "error": "Failed to generate image"}), 500
 
 @app.route('/process', methods=['GET'])
 def process_text():
@@ -391,9 +470,6 @@ def process_text():
             'text': chunk,
             'audio': audio_url
         })
-
-    # Update story.json with the new story data
-    #update_story_json(sanitized_title, speaker, LANGUAGE, story_text)
 
     update_story_json(sanitized_title, title, speaker, LANGUAGE, TEXT)
 
@@ -740,9 +816,9 @@ def get_child_data():
         print(f"Processed child data: {recent_children}")
         
         return jsonify({'success': True, 'data': recent_children})
-    except Exception as e:
-        print(f"Error in get_child_data: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception as e:  
+        print(f"Error in get_child_data: {str(e)}") 
+        return jsonify({'success': False, 'error': str(e)}), 500  
     
 @app.route('/check-child-json', methods=['GET'])
 def check_child_json():
@@ -752,6 +828,10 @@ def check_child_json():
         return jsonify({'success': True, 'data': child_data})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+    
+@app.route('/built/static/image/<path:filename>')
+def serve_image(filename):
+    return send_from_directory(os.path.join(app.root_path, '..', 'static', 'image'), filename)
     
 if __name__ == '__main__':
     app.run(debug=True, port=5000, use_reloader=False, threaded=False)
