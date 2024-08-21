@@ -83,7 +83,7 @@ ChildGPT is an innovative application that creates custom children's stories bas
 
 2. **Access the Web Interface**
 
-*   Open your browser and navigate to http://localhost:5000/built.
+*   Open your browser and navigate to http://localhost:5000/built/index.html.
 
 3. **Generate Stories**
 
