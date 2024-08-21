@@ -353,12 +353,12 @@ def generate_story():
              """},
             {"role": "user", "content": prompt_initial}
         ],
-        #temperature=0.9,
-        top_p=0.95,
-        top_k=50,
+        temperature=0.8, 
+        top_p=0.90,
+        top_k=40,
         min_p=0.05,
         typical_p=1.0,
-        repeat_penalty=1.1
+        repeat_penalty=1.0
     )
 
     prompt = output["choices"][0]['message']['content']
@@ -378,12 +378,11 @@ def generate_story():
              """},
             {"role": "user", "content": prompt}
         ],
-        #temperature=1.2,
-        top_p=0.95,
-        top_k=100,
-        min_p=0.05,
-        typical_p=1.0,
-        repeat_penalty=1.1
+        #top_p=0.95,
+        #top_k=100,
+        #min_p=0.05,
+        #typical_p=1.0,
+        #repeat_penalty=1.1
     )
     story = output_1["choices"][0]['message']['content']
 
