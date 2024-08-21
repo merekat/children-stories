@@ -103,10 +103,8 @@ model_name = "textgen.gguf"
 llm = Llama(model_path=os.path.join(model_directory, model_name), 
             n_gpu_layers=-1,
             n_threads=multiprocessing.cpu_count(),
-            n_ctx=8192,
-            #temperature=1.1
+            n_ctx=2048,
             seed = -1,
-            #top_p=0.95,
             verbose=False,
             #stop=["The end."]
             )
@@ -355,7 +353,7 @@ def generate_story():
              """},
             {"role": "user", "content": prompt_initial}
         ],
-        temperature=0.9,
+        #temperature=0.9,
         top_p=0.95,
         top_k=50,
         min_p=0.05,
@@ -380,7 +378,7 @@ def generate_story():
              """},
             {"role": "user", "content": prompt}
         ],
-        temperature=1.2,
+        #temperature=1.2,
         top_p=0.95,
         top_k=100,
         min_p=0.05,

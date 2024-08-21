@@ -729,17 +729,17 @@ a:visited {
 
 ::-moz-selection {
     background: transparent;
-    color: var(--white);
+    color: var(--color-action);
 }
 
 ::selection {
     background: transparent;
-    color: var(--white);
+    color: var(--color-action);
 }
 
 ::-moz-selection {
     background: transparent;
-    color: var(--white);
+    color: var(--color-action);
 }
 
 video::-moz-selection,
