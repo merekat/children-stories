@@ -228,30 +228,43 @@ def generate_story_html(original_title, sanitized_title, chunks, audio_files, la
 
     return story_html
 
-def generate_and_save_story_image(sanitized_title):
+def generate_and_save_story_image(sanitized_title, story_text):
     global pipe, device
 
-    # Use the predefined prompts
-    prompt = "high detail, realistic, forest setting, trees, sunny, rabbits hopping, evil witch, cinematic concept art, 4k resolution, background is orange clouds and snow covered mountains"
-    negative_prompt = "disfigured, ugly, bad, immature, b&w, blurred"
+    title = sanitized_title.replace('_', ' ')
+    story_preview = story_text[:77]  # Take the first 77 characters of the story
+    negative_prompt = "blurry, disfigured, ugly, bad, immature, b&w, pale"
+    style = "epic and scenic background, watercolor painted, vibrant colors, highest resolution, cinematic, high detail"
+
+    guidance_scale = 12 
+    num_inference_steps = 25
+    height = 1024
+    width = 1024
 
     try:
-            # Generate the image
-            image = pipe(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                num_inference_steps=20,
-            ).images[0]
+        app.logger.info(f"Generating image for title: {title}")
+        app.logger.debug(f"Story preview: {story_preview}")
 
-            # Save the image in the correct static folder
-            image_path = os.path.join(app.root_path, '..', 'static', 'image', f"{sanitized_title}.jpg")
-            os.makedirs(os.path.dirname(image_path), exist_ok=True)
-            image.save(image_path)
+        # Generate the image
+        image = pipe(
+            height=height,
+            width=width,
+            prompt=f"{style} {title} {story_preview}",
+            negative_prompt=negative_prompt,
+            guidance_scale=guidance_scale,
+            num_inference_steps=num_inference_steps
+        ).images[0]
 
-            return f"/built/static/image/{sanitized_title}.jpg"
+        # Save the image in the correct static folder
+        image_path = os.path.join(app.root_path, '..', 'static', 'image', f"{sanitized_title}.jpg")
+        os.makedirs(os.path.dirname(image_path), exist_ok=True)
+        image.save(image_path)
+
+        app.logger.info(f"Image generated and saved at: {image_path}")
+        return f"/built/static/image/{sanitized_title}.jpg"
     except Exception as e:
-            print(f"Error generating image: {str(e)}")
-            return None
+        app.logger.error(f"Error generating image: {str(e)}", exc_info=True)
+        return None
 
 @app.route('/')
 def index():
@@ -260,7 +273,7 @@ def index():
 @app.route('/generate-story', methods=['POST'])
 def generate_story():
     data = request.json
-    topic = data.get('topic', "").strip() or "happy animals"
+    topic = data.get('topic', "").strip() or random.choice(children_story_topics)
     child_age = data.get('child_age', 2)
     word_count = data.get('word_count')
     speaker = data.get('speaker', 'standard')
@@ -407,12 +420,23 @@ def generate_image():
     if not sanitized_title:
         return jsonify({"error": "Sanitized title is required"}), 400
 
-    image_path = generate_and_save_story_image(sanitized_title)
+    # Get the story text from story.json
+    story_text = get_story_by_title(sanitized_title)
     
-    if image_path:
-        return jsonify({"success": True, "image_path": image_path})
-    else:
-        return jsonify({"success": False, "error": "Failed to generate image"}), 500
+    if not story_text:
+        app.logger.error(f"Story text not found for title: {sanitized_title}")
+        return jsonify({"error": "Story text not found"}), 404
+
+    try:
+        image_path = generate_and_save_story_image(sanitized_title, story_text)
+        
+        if image_path:
+            return jsonify({"success": True, "image_path": image_path})
+        else:
+            return jsonify({"success": False, "error": "Failed to generate image"}), 500
+    except Exception as e:
+        app.logger.error(f"Error in generate_image: {str(e)}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/process', methods=['GET'])
 def process_text():
@@ -487,6 +511,8 @@ def generate_audio():
     title = data.get('title')
     text = data.get('text')
 
+    app.logger.debug(f"Received audio generation request: speaker={speaker}, language={language}, title={title}, text={text[:50] if text else None}...")
+
     if not speaker or not title or not text:
         return jsonify({"error": "Speaker, title, and text are required"}), 400
 
@@ -502,7 +528,7 @@ def generate_audio():
         audio_files.append({"text": chunk, "audio": audio_url})
 
     # Update story.json
-    update_story_json(sanitized_title, speaker, language, text)
+    update_story_json(sanitized_title, title, speaker, language, text)
 
     return jsonify({"success": True, "audio_files": audio_files})
 
@@ -685,6 +711,7 @@ def update_story_json(sanitized_title, original_title, new_speaker, language=Non
     try:
         story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
         app.logger.debug(f"Updating story.json at: {story_json_path}")
+        app.logger.debug(f"Received data: sanitized_title={sanitized_title}, original_title={original_title}, new_speaker={new_speaker}, language={language}, text={text[:50] if text else None}...")
 
         if os.path.exists(story_json_path):
             with open(story_json_path, 'r') as f:
@@ -697,10 +724,16 @@ def update_story_json(sanitized_title, original_title, new_speaker, language=Non
         if existing_entry:
             app.logger.info(f"Updating existing entry for title: {sanitized_title}")
             existing_entry["original_title"] = original_title
-            if new_speaker and new_speaker not in existing_entry["speaker"]:
-                existing_entry["speaker"].append(new_speaker)
-            if language and language not in existing_entry["language"]:
-                existing_entry["language"].append(language)
+            if new_speaker:
+                if "speaker" not in existing_entry:
+                    existing_entry["speaker"] = []
+                if new_speaker not in existing_entry["speaker"]:
+                    existing_entry["speaker"].append(new_speaker)
+            if language:
+                if "language" not in existing_entry:
+                    existing_entry["language"] = []
+                if language not in existing_entry["language"]:
+                    existing_entry["language"].append(language)
             if text:
                 existing_entry["text"] = text
         else:
@@ -713,6 +746,8 @@ def update_story_json(sanitized_title, original_title, new_speaker, language=Non
                 "language": [language] if language else []
             }
             story_data.append(new_entry)
+
+        app.logger.debug(f"Updated story data: {json.dumps(story_data, indent=2)}")
 
         with open(story_json_path, 'w') as f:
             json.dump(story_data, f, indent=2)

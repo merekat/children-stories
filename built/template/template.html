@@ -27,26 +27,27 @@
 
 
         <h2 id="storyTitle" class="story-title">{{{title}}}</h2>
-        <label for="existingSpeakers">Select Existing Speaker:</label>
-        <select id="existingSpeakers" name="existingSpeakers">
-            {{#existing_speakers}}
-            <option value="{{.}}">{{.}}</option>
-            {{/existing_speakers}}
-        </select>
+        <div class="speaker-select flex">
+            <div>
+                <label for="existingSpeakers">Current Speaker</label>
+                <select id="existingSpeakers" name="existingSpeakers">
+                    {{#existing_speakers}}
+                    <option value="{{.}}">{{.}}</option>
+                    {{/existing_speakers}}
+                </select>
+            </div>
+            <div>
+                <label for="allSpeakers">Select New Speaker</label>
+                <select id="allSpeakers" name="allSpeakers">
+                    <option value="">Select a new speaker</option>
+                    {{#all_speakers}}
+                    <option value="{{.}}">{{.}}</option>
+                    {{/all_speakers}}
+                </select>
+            </div>
 
-        <br>
-
-        <label for="allSpeakers">Select New Speaker:</label>
-        <select id="allSpeakers" name="allSpeakers">
-            <option value="">Select a new speaker</option>
-            {{#all_speakers}}
-            <option value="{{.}}">{{.}}</option>
-            {{/all_speakers}}
-        </select>
-
-        <br>
-
-        <button id="generateButton" disabled>Generate Audio for New Speaker</button>
+            <button id="generateButton" disabled>Generate Audio</button>
+        </div>
         <div id="generationStatus"></div>
 
         <div id="audioChunks">
@@ -69,8 +70,8 @@
         // Pass necessary data to JavaScript
         const storyData = {
             originalTitle: "{{{title}}}",
-            sanitizedTitle: "{{{sanitized_title}}}",
-            language: "{{{language}}}"
+            sanitizedTitle: "{{sanitized_title}}",
+            language: "{{language}}"
         };
         // Function to replace underscores with spaces
         function formatTitle(title) {
