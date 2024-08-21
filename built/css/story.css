@@ -22,21 +22,12 @@ body {
 }
 
 .container {
-    max-width: 800px;
+    max-width: 1100px;
     margin: 0 auto;
     background-color: rgba(255, 255, 255, 0.9);
-    padding: 30px;
+    padding: 0 var(--space-2) var(--space-1) var(--space-2);
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
-    color: var(--color-first);
-    text-align: center;
-    margin-bottom: 20px;
-    font-weight: normal;
-    text-transform: none;
-    letter-spacing: normal;
 }
 
 /* Select inputs styling */
@@ -124,12 +115,23 @@ button:disabled {
 #content {
     max-width: 800px;
     width: 100%;
-    padding: var(--space-1) var(--space-2);
+    padding: 0 var(--space-2) var(--space-1) var(--space-2);
     background-color: #f9f9f9;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     max-width: 1100px;
     margin: 20px auto 50px auto;
+}
+
+.story-image-container {
+    width: 100%;
+    height: 600px;
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    margin-bottom: 70px;
+    position: relative;
+    border-radius: 0 0 25px 25px;
 }
 
 .story-title {
@@ -158,7 +160,7 @@ button:disabled {
 
 @media screen and (min-width: 550px) {
     #content {
-        padding: var(--space-2) var(--space-4);
+        padding: 0 var(--space-4) var(--space-2) var(--space-4);
     }
     .chunk {    
             --chunk-width: 400px;
@@ -171,7 +173,7 @@ button:disabled {
 
 @media screen and (min-width: 900px) {
     #content {
-        padding: var(--space-8) var(--space-8);
+        padding: 0 var(--space-8) var(--space-8) var(--space-8);
     }
 }
 
@@ -228,9 +230,9 @@ audio::-webkit-media-controls-time-remaining-display {
     color: var(--color-first-dark-1);
 }
 
-@media screen and (max-width: 600px) {
+@media screen and (max-width: 550px) {
     .container {
-        padding: 15px;
+        padding: 0 var(--space-4) var(--space-2) var(--space-4);
     }
 
     .chunk {
@@ -242,5 +244,11 @@ audio::-webkit-media-controls-time-remaining-display {
     .play-button {
         margin-right: 0;
         margin-bottom: 10px;
+    }
+}
+
+@media screen and (max-width: 900) {
+    .container {
+        padding: 0 var(--space-8) var(--space-8) var(--space-8);
     }
 }

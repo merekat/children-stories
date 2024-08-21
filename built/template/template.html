@@ -18,8 +18,15 @@
 </head>
 
 <body>
-    <div class="container speaker-selection">
-        <h1 id="storyTitle">{{{title}}}</h1>
+
+    <div id="content" class=" container speaker-selection">
+
+        <div class="story-image-container"
+            style="background-image: url('/built/static/image/{{{sanitized_title}}}.jpg');">
+        </div>
+
+
+        <h2 id="storyTitle" class="story-title">{{{title}}}</h2>
         <label for="existingSpeakers">Select Existing Speaker:</label>
         <select id="existingSpeakers" name="existingSpeakers">
             {{#existing_speakers}}
