@@ -31,23 +31,24 @@ body {
 }
 
 /* Select inputs styling */
-.speaker-selection {
-    margin-bottom: 30px;
+.speaker-select {
+    margin: var(--space-5) 0;
+    gap: 20px;
 }
 
 .speaker-selection label {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
+    white-space: nowrap;
 }
 
 .speaker-selection select {
-    width: 100%;
     padding: 10px;
-    margin-bottom: 15px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    background-color: white;
+    background-color: #f9f9f9;
+    margin-bottom: 0;
 }
 
 label {
@@ -56,8 +57,41 @@ label {
     font-weight: bold;
 }
 
-select {
+.speaker-select div, .speaker-select button  {
+    width: 100%;  
+}
+
+.speaker-select button  {
+    margin-top: 25px; 
+}
+
+@media screen and (min-width: 1000px) {
+    .speaker-select div, .speaker-select button  {
+        width: calc(100% / 3 - 20px * 2);
+        margin-bottom: 15px;  
+    }
+    speaker-select button  {
+        margin-top: 30px; 
+    }  
+}
+
+.speaker-select div select {
     width: 100%;
+}
+
+
+.speaker-select label {
+    position: relative;
+    display: inline-block;
+    padding: 0 10px;
+    font-weight: bold;
+    color: var(--gray-9);
+    transform: translate(10px, 12px);
+    z-index: 2;
+    background: #f9f9f9;
+}
+
+select {
     padding: 10px;
     margin-bottom: 10px;
     border: 1px solid #ddd;
@@ -67,7 +101,6 @@ select {
 
 #generateButton {
     display: block;
-    width: 100%;
     padding: 10px;
     background-color: var(--color-first);
     color: white;
@@ -75,7 +108,6 @@ select {
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
-    margin-top: 10px;
 }
 
 #generateButton:hover {
@@ -112,6 +144,13 @@ button:disabled {
     margin-top: 10px;
     font-style: italic;
 }
+
+.speaker-select {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
 #content {
     max-width: 800px;
     width: 100%;
@@ -125,9 +164,9 @@ button:disabled {
 
 .story-image-container {
     width: 100%;
-    height: 600px;
+    aspect-ratio: 1 / 1;
     background-size: cover;
-    background-position: center bottom;
+    background-position: center center;
     background-repeat: no-repeat;
     margin-bottom: 70px;
     position: relative;
@@ -150,6 +189,16 @@ button:disabled {
     left: calc(55% - (var(--chunk-width, 100%) / 2));
 }
 
+
+.chunk {
+    position: relative;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+    max-width: var(--chunk-width);
+    left: calc(55% - (var(--chunk-width) / 2));
+}
+
 .chunk p {
     margin: 0;
     font-size: 1.1rem;
@@ -160,7 +209,7 @@ button:disabled {
 
 @media screen and (min-width: 550px) {
     #content {
-        padding: 0 var(--space-4) var(--space-2) var(--space-4);
+        padding: 0 var(--space-8) var(--space-2) var(--space-8);
     }
     .chunk {    
             --chunk-width: 400px;
@@ -170,12 +219,18 @@ button:disabled {
     }
 }
 
+@media screen and (min-width: 750px) {
+    #content {
+        padding: 0 var(--space-15) var(--space-2) var(--space-15);
+    }
+}
 
 @media screen and (min-width: 900px) {
     #content {
-        padding: 0 var(--space-8) var(--space-8) var(--space-8);
+        padding: 0 var(--space-20) var(--space-8) var(--space-20);
     }
 }
+
 
 .chunk p {
     margin: 0;
@@ -235,14 +290,7 @@ audio::-webkit-media-controls-time-remaining-display {
         padding: 0 var(--space-4) var(--space-2) var(--space-4);
     }
 
-    .chunk {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
     .play-button {
-        margin-right: 0;
         margin-bottom: 10px;
     }
 }

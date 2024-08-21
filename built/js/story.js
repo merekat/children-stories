@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Set the title
-    document.querySelector('h1').textContent = originalTitle;
+    document.querySelector('h2').textContent = originalTitle;
 
     function populateExistingSpeakers(speakers) {
         existingSpeakersSelect.innerHTML = '';
@@ -35,8 +35,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function populateAllSpeakers(allSpeakers, existingSpeakers) {
-        allSpeakersSelect.innerHTML = '<option value="">Select a new speaker</option>';
+    function populateAllSpeakers() {
+        allSpeakersSelect.innerHTML = '<option value=""></option>';
         allSpeakers.forEach(speaker => {
             if (!existingSpeakers.includes(speaker)) {
                 const option = document.createElement('option');
@@ -49,6 +49,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateAudioSources(speaker) {
         const audioElements = document.querySelectorAll('audio');
+        const language = storyData.language;
+        const sanitizedTitle = storyData.sanitizedTitle;
         audioElements.forEach((audio, index) => {
             audio.src = `/built/static/audio/${speaker}_${language}_${sanitizedTitle}_${index + 1}.wav`;
         });
@@ -106,6 +108,20 @@ document.addEventListener('DOMContentLoaded', function () {
         generateButton.disabled = !this.value;
     });
 
+    function fetchLatestSpeakerData() {
+        fetch(`${backendUrl}/get-story-speakers?title=${sanitizedTitle}`)
+            .then(response => response.json())
+            .then(data => {
+                existingSpeakers = data.existing_speakers;
+                allSpeakers = data.all_speakers;
+                populateExistingSpeakers(existingSpeakers);
+                populateAllSpeakers();
+            })
+            .catch(error => {
+                console.error('Error fetching latest speaker data:', error);
+            });
+    }
+
     generateButton.addEventListener('click', function () {
         const speaker = allSpeakersSelect.value;
         if (!speaker) return;
@@ -118,28 +134,28 @@ document.addEventListener('DOMContentLoaded', function () {
             .map(p => p.textContent)
             .join(' ');
 
-    fetch(`${backendUrl}/generate_audio`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                speaker: speaker,
-                language: language,
-                title: sanitizedTitle,
-                text: fullText
-            }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                generationStatus.textContent = "Audio generated successfully!";
-                updateAudioSources(speaker);
-                // ... (rest of the success handling)
-            } else {
-                generationStatus.textContent = "Error generating audio: " + data.message;
-            }
-        })
+        fetch(`${backendUrl}/generate_audio`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    speaker: speaker,
+                    language: language,
+                    title: sanitizedTitle,
+                    text: fullText
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    generationStatus.textContent = "Audio generated successfully!";
+                    updateAudioSources(speaker);
+                    fetchLatestSpeakerData(); // Refresh speaker data
+                } else {
+                    generationStatus.textContent = "Error generating audio: " + data.message;
+                }
+            })
             .catch(error => {
                 console.error('Error:', error);
                 generationStatus.textContent =

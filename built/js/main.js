@@ -283,84 +283,110 @@ $(document).ready(function () {
             selectedMoralLessons.push($(this).val());
         });
 
+        const formData = {
+            topic: topicInput,
+            child_age: childAge,
+            word_count: wordCount,
+            speaker: speaker,
+            language_code: languageCode,
+            language_name: languageName,
+            main_character: mainCharacter,
+            setting: settingInput,
+            user_prompt: userPrompt,
+            moral_lessons: selectedMoralLessons
+        };
+
         $.ajax({
             url: `${backendUrl}/generate-story`,
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({
-                // ... (existing data)
-            }),
-            success: function (data) {
-                if (data.success) {
-                    content.html(`<h2>${data.title}</h2>`);
-                    // Add image placeholder
-                    content.prepend('<div class="story-image-container">Generating image...</div>');
-                    displayTextChunks(speaker, data.sanitized_title, languageCode);
-                    // Start image generation after displaying text
-                    generateStoryImage(data.sanitized_title);
+            data: JSON.stringify(formData),
+            success: function (response) {
+                if (response.success) {
+                    $('#storyTitle').text(response.title);
+                    $('#storyContent').empty();
+
+                    // Display the text first
+                    displayTextChunks(speaker, response.sanitized_title, response.language)
+                        .then(() => {
+                            // After text is displayed, generate the image
+                            generateStoryImage(response.sanitized_title);
+                            // Generate audio for chunks
+                            generateAudioForChunks(speaker, response.sanitized_title, response.language);
+                        })
+                        .catch(error => {
+                            console.error('Error displaying text chunks:', error);
+                        });
                 } else {
-                    content.html('<p>Error generating story. Please try again.</p>');
+                    alert('Error generating story: ' + response.error);
                 }
+                generateStoryButton.prop('disabled', false);
             },
-            error: function () {
-                content.html('<p>Error generating story. Please try again.</p>');
-            },
-            complete: function () {
+            error: function (xhr, status, error) {
+                alert('Error generating story: ' + error);
                 generateStoryButton.prop('disabled', false);
             }
         });
     }
 
     function displayTextChunks(speaker, sanitizedTitle, language) {
-        fetch(`${backendUrl}/process?speaker=${speaker}&title=${sanitizedTitle}&language=${language}&generate_audio=false`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Received data:', data);
-                // Create the content div 
-                let contentDiv = $('#content');
-                if (contentDiv.length === 0) {
-                    contentDiv = $('<div id="content"></div>');
-                    $('.button-container').after(contentDiv); // Insert after the button container
-                }
+        return new Promise((resolve, reject) => {
+            fetch(`${backendUrl}/process?speaker=${speaker}&title=${sanitizedTitle}&language=${language}&generate_audio=false`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Received data:', data);
+                    // Create the content div 
+                    let contentDiv = $('#content');
+                    if (contentDiv.length === 0) {
+                        contentDiv = $('<div id="content"></div>');
+                        $('.button-container').after(contentDiv); // Insert after the button container
+                    }
 
-                contentDiv.empty(); // Clear any existing content
+                    contentDiv.empty(); // Clear any existing content
 
-                // Add image placeholder
-                const imagePlaceholder = $('<div></div>').addClass('story-image-container').text('Generating image...');
-                contentDiv.append(imagePlaceholder);
+                    // Add image placeholder
+                    const imagePlaceholder = $('<div></div>').addClass('story-image-container').text('Generating image...');
+                    contentDiv.append(imagePlaceholder);
 
-                // Add the title
-                const titleElement = $('<h2></h2>')
-                    .addClass('story-title')
-                    .text(sanitizedTitle.replace(/_/g, ' ')); // Replace underscores with spaces
-                contentDiv.append(titleElement);
+                    // Add the title
+                    const titleElement = $('<h2></h2>')
+                        .addClass('story-title')
+                        .text(sanitizedTitle.replace(/_/g, ' ')); // Replace underscores with spaces
+                    contentDiv.append(titleElement);
 
-                // Handle both array and object responses
-                const chunks = Array.isArray(data) ? data : [data];
+                    // Handle both array and object responses
+                    const chunks = Array.isArray(data) ? data : [data];
 
-                chunks.forEach((item, index) => {
-                    const chunkDiv = $('<div></div>')
-                        .addClass('chunk')
-                        .attr('data-index', index)
-                        .html(`<p>${item.text}</p>`);
-                    contentDiv.append(chunkDiv);
+                    chunks.forEach((item, index) => {
+                        const chunkDiv = $('<div></div>')
+                            .addClass('chunk')
+                            .attr('data-index', index)
+                            .html(`<p>${item.text}</p>`);
+                        contentDiv.append(chunkDiv);
+                    });
+
+                    // Show the content div
+                    contentDiv.show();
+
+                    // Smooth scroll to the story content
+                    contentDiv[0].scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+
+                    resolve(); // Resolve the promise after displaying text
+                })
+                .catch(error => {
+                    console.error('Error fetching text chunks:', error);
+                    alert('An error occurred while processing the text. Please try again.');
+                    reject(error);
                 });
-
-                // Show the content div
-                contentDiv.show();
-
-                // After displaying text, start generating audio
-                generateAudioForChunks(speaker, sanitizedTitle, language);
-            })
-            .catch(error => {
-                console.error('Error fetching text chunks:', error);
-                alert('An error occurred while processing the text. Please try again.');
-            });
+        });
     }
 
     function generateStoryImage(sanitizedTitle) {
@@ -387,10 +413,41 @@ $(document).ready(function () {
     }
 
     function displayStoryImage(imagePath) {
+        console.log('Displaying image with path:', imagePath);
         const imageContainer = $('.story-image-container');
-        imageContainer.empty(); // Clear any existing content
+
+        if (imageContainer.length === 0) {
+            console.error('Story image container not found');
+            return;
+        }
+
+        imageContainer.empty();
+
+        // Check if the imagePath is valid
+        if (!imagePath) {
+            console.error('Image path is empty or undefined');
+            imageContainer.text('Error: No image path provided');
+            return;
+        }
+
+        // Try setting the background image
+        imageContainer.css('background-image', `url('${imagePath}')`);
+
+        // Check if the background-image was set successfully
+        const computedStyle = window.getComputedStyle(imageContainer[0]);
+        const backgroundImage = computedStyle.getPropertyValue('background-image');
+
+        console.log('Computed background-image:', backgroundImage);
+
+        if (backgroundImage === 'none' || backgroundImage === '') {
+            console.error('Failed to set background image');
+            imageContainer.text('Error: Failed to load image');
+        } else {
+            console.log('Background image set successfully');
+        }
+
+        // Set other styles
         imageContainer.css({
-            'background-image': `url(${imagePath})`,
             'background-size': 'cover',
             'background-position': 'center bottom',
             'background-repeat': 'no-repeat'
