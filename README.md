@@ -18,14 +18,14 @@
 - **Image Generation**: Automatically creates illustrations to accompany the stories.
 - **Interactive Experience**: Engaging storytelling for children, even when parents can't be there in person.
 
-## Try out our app [here](https://) 
+## Try out our app [here](https://github.com/merekat/children-stories/blob/main/app_instruction.md) 
 <font color="red"> Link to app_instruction.md @Michel You are in charge of making this md file </font>
 
 
 
 # DIY Tutorials
 
-- [Finetuning large language models (LLMs) using Quantized Low Rank Adapters (QLoRA)](https://) <font color="red"> @Nobu You are in charge of making this notebook </font>
+- [Finetuning large language models (LLMs) using Quantized Low Rank Adapters (QLoRA)](https://github.com/merekat/children-stories/tree/main/Tutorials/LLM_QLoRA) <font color="red"> @Nobu You are in charge of making this notebook </font>
 
 - [Deniz's stuff](https://) <font color="red"> @Deniz You are in charge of making this notebook. </font>
 
