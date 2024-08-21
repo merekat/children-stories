@@ -100,7 +100,8 @@ moral = ["friendship", "diversity", "empathy", "respect", "courage", "honesty", 
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 model_directory = '../model/'
 model_name = "textgen.gguf"
-llm = Llama(model_path=os.path.join(model_directory, model_name), #n_gpu_layers=-1 needs to be added
+llm = Llama(model_path=os.path.join(model_directory, model_name), 
+            n_gpu_layers=-1,
             n_threads=multiprocessing.cpu_count(),
             n_ctx=8192,
             #temperature=1.1
@@ -394,7 +395,7 @@ def generate_story():
         "title": original_title,
         "sanitized_title": sanitized_title,
         "language": LANGUAGE,
-        "text": TEXT,  # Include the full story text in the response
+        "text": TEXT,  
         "audio_files": []
     }), 200
 
