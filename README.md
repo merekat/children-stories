@@ -5,7 +5,7 @@
 <font color="red"> Abstract here </font>
 
 
-# Children's book generation App
+# Childrens' Book Generation App
 
 <font color="red"> Insert a picture of the webpage here </font>
 
