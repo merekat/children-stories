@@ -6,10 +6,10 @@ six==1.12.0
 flask
 flask-cors
 flask-sse
-torch
 pydub
-torchvision
-torchaudio 
+torch # in case you need a special version, go to https://pytorch.org
+torchvision # in case you need a special version, go to https://pytorch.org
+torchaudio # in case you need a special version, go to https://pytorch.org
 soundfile 
 librosa
 chevron
@@ -17,11 +17,9 @@ TTS
 flask_cors
 llama-cpp-python
 huggingface-hub
+git+https://github.com/huggingface/diffusers
 celery 
 redis
-peft -q # This needs to be check by Deniz
 accelerate
 numpy==1.26.4
-#!pip install git+https://github.com/huggingface/diffusers
-optimum-quanto
-#!pip install transformers --upgrade 
+#peft # in case of LoRa usage
