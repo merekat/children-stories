@@ -61,10 +61,6 @@ label {
     width: 100%;  
 }
 
-.speaker-select button  {
-    margin-top: 25px; 
-}
-
 @media screen and (min-width: 1000px) {
     .speaker-select div, .speaker-select button  {
         width: calc(100% / 3 - 20px * 2);
@@ -81,7 +77,7 @@ label {
 
 
 .speaker-select label {
-    position: relative;
+    position: absolute;;
     display: inline-block;
     padding: 0 10px;
     font-weight: bold;
@@ -89,6 +85,7 @@ label {
     transform: translate(10px, 12px);
     z-index: 2;
     background: #f9f9f9;
+    margin-top: -27px;
 }
 
 select {
@@ -120,7 +117,7 @@ select {
 }
 
 #generationStatus {
-    margin-top: 10px;
+    margin: var(--space-2) auto;
     font-style: italic;
     text-align: center;
 }
@@ -138,11 +135,6 @@ button {
 button:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
-}
-
-#generationStatus {
-    margin-top: 10px;
-    font-style: italic;
 }
 
 .speaker-select {

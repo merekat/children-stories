@@ -866,5 +866,36 @@ def check_child_json():
 def serve_image(filename):
     return send_from_directory(os.path.join(app.root_path, '..', 'static', 'image'), filename)
     
+@app.route('/get-story-speakers', methods=['GET'])
+def get_story_speakers():
+    title = request.args.get('title')
+    if not title:
+        return jsonify({"error": "Title parameter is required"}), 400
+
+    story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
+    speaker_json_path = os.path.join(app.root_path, '..', 'config', 'speaker.json')
+
+    try:
+        # Get existing speakers for the story
+        with open(story_json_path, 'r') as f:
+            story_data = json.load(f)
+        
+        story_entry = next((item for item in story_data if item["title"] == title), None)
+        existing_speakers = story_entry.get("speaker", []) if story_entry else []
+
+        # Get all available speakers
+        with open(speaker_json_path, 'r') as f:
+            all_speakers_data = json.load(f)
+        all_speakers = all_speakers_data.get("speakers", [])
+
+        return jsonify({
+            "success": True,
+            "existing_speakers": existing_speakers,
+            "all_speakers": all_speakers
+        })
+    except Exception as e:
+        app.logger.error(f"Error in get_story_speakers: {str(e)}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
+    
 if __name__ == '__main__':
     app.run(debug=True, port=5000, use_reloader=False, threaded=False)

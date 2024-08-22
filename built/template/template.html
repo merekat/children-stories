@@ -81,7 +81,7 @@
         // Apply the formatting when the document is ready
         $(document).ready(function () {
             const formattedTitle = formatTitle(storyData.originalTitle);
-            document.title = "Story: " + formattedTitle;
+            document.title = formattedTitle;
             $('#storyTitle').text(formattedTitle);
         });
     </script>

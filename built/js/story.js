@@ -8,26 +8,45 @@ document.addEventListener('DOMContentLoaded', function () {
     const generationStatus = document.getElementById('generationStatus');
     const backendUrl = 'http://localhost:5000'; // Adjust this if your backend URL is different
 
-    const speakerData = document.getElementById('speakerData');
-    const existingSpeakersJson = speakerData.getAttribute('data-existing-speakers');
-    const allSpeakersJson = speakerData.getAttribute('data-all-speakers');
+    let existingSpeakers = [];
+    let allSpeakers = [];
 
-    let existingSpeakers, allSpeakers;
-    try {
-        existingSpeakers = JSON.parse(existingSpeakersJson);
-        allSpeakers = JSON.parse(allSpeakersJson);
-    } catch (error) {
-        console.error("Error parsing JSON:", error);
-        existingSpeakers = [];
-        allSpeakers = [];
+    function fetchSpeakers() {
+        const title = storyData.sanitizedTitle;
+        fetch(`/get-story-speakers?title=${encodeURIComponent(title)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    existingSpeakers = data.existing_speakers;
+                    allSpeakers = data.all_speakers;
+
+                    // Ensure "standard" is always in allSpeakers
+                    if (!allSpeakers.includes("standard")) {
+                        allSpeakers.push("standard");
+                    }
+
+                    populateExistingSpeakers();
+                    populateAllSpeakers();
+                } else {
+                    console.error('Error fetching speakers:', data.error);
+                    existingSpeakers = [];
+                    allSpeakers = ['standard'];
+                    populateExistingSpeakers();
+                    populateAllSpeakers();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching speakers:', error);
+                existingSpeakers = [];
+                allSpeakers = ['standard'];
+                populateExistingSpeakers();
+                populateAllSpeakers();
+            });
     }
 
-    // Set the title
-    document.querySelector('h2').textContent = originalTitle;
-
-    function populateExistingSpeakers(speakers) {
+    function populateExistingSpeakers() {
         existingSpeakersSelect.innerHTML = '';
-        speakers.forEach(speaker => {
+        existingSpeakers.forEach(speaker => {
             const option = document.createElement('option');
             option.value = speaker;
             option.textContent = speaker;
@@ -37,20 +56,44 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function populateAllSpeakers() {
         allSpeakersSelect.innerHTML = '<option value=""></option>';
-        allSpeakers.forEach(speaker => {
-            if (!existingSpeakers.includes(speaker)) {
-                const option = document.createElement('option');
-                option.value = speaker;
-                option.textContent = speaker;
-                allSpeakersSelect.appendChild(option);
-            }
+
+        // Create an array to hold the speakers we'll add to the select
+        let speakersToAdd = allSpeakers.filter(speaker => !existingSpeakers.includes(speaker));
+
+        // If "standard" is in speakersToAdd, remove it so we can add it separately
+        const standardIndex = speakersToAdd.indexOf("standard");
+        if (standardIndex > -1) {
+            speakersToAdd.splice(standardIndex, 1);
+        }
+
+        // Add "standard" as the second option if it's not in existingSpeakers
+        if (!existingSpeakers.includes("standard")) {
+            const standardOption = document.createElement('option');
+            standardOption.value = "standard";
+            standardOption.textContent = "standard";
+            allSpeakersSelect.appendChild(standardOption);
+        }
+
+        // Add the rest of the speakers
+        speakersToAdd.forEach(speaker => {
+            const option = document.createElement('option');
+            option.value = speaker;
+            option.textContent = speaker;
+            allSpeakersSelect.appendChild(option);
         });
     }
 
+    // Function to format the title
+    function formatTitle(title) {
+        return title.replace(/_/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    // Set the formatted title
+    document.querySelector('h2').textContent = formatTitle(originalTitle);
+
     function updateAudioSources(speaker) {
         const audioElements = document.querySelectorAll('audio');
-        const language = storyData.language;
-        const sanitizedTitle = storyData.sanitizedTitle;
         audioElements.forEach((audio, index) => {
             audio.src = `/built/static/audio/${speaker}_${language}_${sanitizedTitle}_${index + 1}.wav`;
         });
@@ -90,14 +133,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    populateExistingSpeakers(existingSpeakers);
-    populateAllSpeakers(allSpeakers, existingSpeakers);
-
-    if (existingSpeakers.length > 0) {
-        existingSpeakersSelect.value = existingSpeakers[0];
-        updateAudioSources(existingSpeakers[0]);
-    }
-
+    fetchSpeakers();
     setupAudioPlayback();
 
     existingSpeakersSelect.addEventListener('change', function () {
@@ -109,16 +145,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function fetchLatestSpeakerData() {
-        fetch(`${backendUrl}/get-story-speakers?title=${sanitizedTitle}`)
+        return fetch(`/get-story-speakers?title=${encodeURIComponent(sanitizedTitle)}`)
             .then(response => response.json())
             .then(data => {
-                existingSpeakers = data.existing_speakers;
-                allSpeakers = data.all_speakers;
-                populateExistingSpeakers(existingSpeakers);
-                populateAllSpeakers();
-            })
-            .catch(error => {
-                console.error('Error fetching latest speaker data:', error);
+                if (data.success) {
+                    existingSpeakers = data.existing_speakers;
+                    allSpeakers = data.all_speakers;
+                    populateExistingSpeakers();
+                    populateAllSpeakers();
+                } else {
+                    throw new Error(data.error || "Error fetching speakers");
+                }
             });
     }
 
@@ -149,21 +186,39 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    generationStatus.textContent = "Audio generated successfully!";
+                    // Update audio sources
                     updateAudioSources(speaker);
-                    fetchLatestSpeakerData(); // Refresh speaker data
+
+                    // Fetch latest speaker data
+                    return fetchLatestSpeakerData();
                 } else {
-                    generationStatus.textContent = "Error generating audio: " + data.message;
+                    throw new Error(data.message || "Error generating audio");
                 }
+            })
+            .then(() => {
+                // Update the first select with the new speaker
+                if (!existingSpeakers.includes(speaker)) {
+                    existingSpeakers.push(speaker);
+                    const option = document.createElement('option');
+                    option.value = speaker;
+                    option.textContent = speaker;
+                    existingSpeakersSelect.appendChild(option);
+                }
+                existingSpeakersSelect.value = speaker;
+
+                // Update the second select
+                populateAllSpeakers(); // This will recreate the options based on the updated speaker lists
+
+                // Show success message
+                generationStatus.textContent = "Audio generated successfully!";
             })
             .catch(error => {
                 console.error('Error:', error);
-                generationStatus.textContent =
-                    "An error occurred while generating audio: " +
-                    error.message;
+                generationStatus.textContent = "An error occurred while generating audio: " + error.message;
             })
             .finally(() => {
                 generateButton.disabled = false;
             });
     });
+
 });

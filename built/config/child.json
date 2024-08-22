@@ -28,5 +28,10 @@
     "age_group_value": 4,
     "language": "de",
     "last_updated": 1723741987.231192
+  },
+  "Alice": {
+    "age_group_value": 2,
+    "language": "en",
+    "last_updated": 1724337871.996751
   }
 }
