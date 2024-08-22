@@ -1,4 +1,4 @@
-# <font color="red"> Project Name</font>
+# <font color="red"> OhanashiGPT </font>
 
 <font color="red"> Insert pretty picture here </font>
 
