@@ -38,6 +38,7 @@ body {
     --font-size-095: calc(var(--text-base-size)*0.95);
     --font-size-1: calc(var(--text-base-size)*1);
     --font-size-125: calc(var(--text-base-size)*1.25);
+        --font-size-135: calc(var(--text-base-size)*1.35);
     --font-size-15: calc(var(--text-base-size)*1.5);
     --font-size-175: calc(var(--text-base-size)*1.75);
     --font-size-2: calc(var(--text-base-size)*2);

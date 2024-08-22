@@ -28,9 +28,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     storyDiv.className = 'story';
 
                     const title = story.title;
-                    const formattedTitle = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase();
-                    const linkTitle = title.toLowerCase().replace(/ /g, '_');
-                    const imgSrc = `/built/static/image/${linkTitle}_cover.png`;
+                    const formattedTitle = title.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    const linkTitle = title.replace(/ /g, '_');
+                    const imgSrc = `/built/static/image/${linkTitle}.jpg`;
                     const defaultImgSrc = '/built/static/image/standard_cover.png';
 
                     const img = new Image();

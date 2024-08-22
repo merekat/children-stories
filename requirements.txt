@@ -17,6 +17,7 @@ TTS
 flask_cors
 llama-cpp-python
 huggingface-hub
+accelerate
 git+https://github.com/huggingface/diffusers
 celery 
 redis
