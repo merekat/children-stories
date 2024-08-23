@@ -43,7 +43,7 @@ h1 {
 
 #project-description p {
     font-size: var(--font-size-125);
-    line-height: var(--font-size-135);
+    line-height: var(--font-size-14);
 }
 
 .team-member {

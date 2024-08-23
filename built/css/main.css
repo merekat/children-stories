@@ -566,6 +566,9 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .story-image-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
     width: 100%;
     aspect-ratio: 1 / 1;
     margin-bottom: 70px;
