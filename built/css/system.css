@@ -728,11 +728,6 @@ a:visited {
 
 /*  =================== MARKER =================== */
 
-::-moz-selection {
-    background: transparent;
-    color: var(--color-action);
-}
-
 ::selection {
     background: transparent;
     color: var(--color-action);
