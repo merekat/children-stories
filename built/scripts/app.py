@@ -332,16 +332,18 @@ def generate_story():
     # Set initial prompt
     prompt_user = ""
 
-    prompt_initial = f"""
-    Develop a prompt that enables large language models to create engaging and age-appropriate stories for children in {language_name}.
-    Include and enhance this prompt in your prompt generation: {prompt_user}. Do not ignore this. 
-    Generate an entire story with approximately {word_count} words for children aged {age_range} about {topic} with a playful tone and narrative writing style like {selected_author}. 
-    Start with a meaningful title: {title}.
-    The main character is {story_main_character}. The story takes place {story_setting}.
-    The story should be set in a world that is both familiar and unknown to the child reader. 
-    {moral_lessons_prompt}
-    End the story with the saying: "The end!"
-    """
+    prompt_initial = f"""    
+        Develop a prompt that enables large language models to create engaging and age-appropriate stories for children in {language_name}.
+        Generate an enhanced prompt with the following key points and do not ignore these: 
+        - Generate an entire story with approximately {word_count} words for children aged {age_range} about {topic} with a playful tone and narrative writing style like {selected_author}. 
+        - {prompt_user}
+        - Start with a meaningful title: {title}
+        - The main character is {story_main_character}. 
+        - The story takes place {story_setting}.  
+        - The story should be set in a world that is both familiar and unknown to the child reader. 
+        - The story should incorporate a moral lesson about the importance of {moral_lessons_prompt}.
+        - End the story with the saying: "The end!"
+        """
 
     # Prompt generation
     output = llm.create_chat_completion(
