@@ -318,7 +318,7 @@ body#gallery {
 .story span {
     position: absolute;
     display: inline-block;
-    width: 70%;
+    width: 80%;
     margin: 50% auto auto auto;
     color: white;
     padding: 5px 0 5px var(--space-3);
@@ -336,7 +336,7 @@ a:nth-last-of-type(n+2) .story span {
 
 
 a:nth-last-of-type(n+3) .story span {
-    margin: 55% auto auto 30%;
+    margin: 55% auto auto 20%;
     text-align: right;
     padding: 5px var(--space-3) 5px 0;
 }
