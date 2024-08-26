@@ -48,27 +48,19 @@ ChildGPT is an innovative application that creates custom children's stories bas
     pip install -r requirements.txt
     ```
 
-4. **Install Dependencies**
+3. **Install Dependencies**
 
    ```bash
    pip install pip==24.1.2
    pip install -r requirements.txt
     ```
 
-5. **Download and Prepare Models**
-*   Ensure you have the model files in the built/model directory.
-*   Run text_generation.py to download and train prebuilt text generation model Lama. This might take some time.
-   
-   ```bash
-   cd text-gen
-   python text_generation.py  
-   ```
-*   Run audio_generation.py to download and train prebuilt text generation model xtts_v2. This might take some time. 
+4. **Download and Prepare Models**
+Ensure you have the model files in the built/model directory. Run text_generation.py to download and train prebuilt models. This might take some time.
 
    ```bash
-   cd audio-gen
-   python audio_generation.py  
-   ```
+   python downloads.py  
+    ```
 
 *   All models will automatically be saved in the built/model directory. 
 
@@ -88,4 +80,4 @@ ChildGPT is an innovative application that creates custom children's stories bas
 3. **Generate Stories**
 
 *   Input the required parameters such as age and preferences.
-*   Click the "Start Processing" button to generate and narrate the story.
+*   Click the "Generate Story" button to generate and narrate the story.
