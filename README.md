@@ -24,6 +24,7 @@ To run the app locally you have to install the depencies, download the models an
 
 
 # DIY Tutorials
+We also provide useful tutorials here so that you too can make your own models!
 
 - [Finetuning large language models (LLMs) using Quantized Low-Rank Adaptation (QLoRA)](./finetuning/LLM_QLoRA)
 
