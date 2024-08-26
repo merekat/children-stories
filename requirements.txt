@@ -6,16 +6,21 @@ six==1.12.0
 flask
 flask-cors
 flask-sse
-torch
 pydub
-torchaudio 
+torch # in case you need a special version, go to https://pytorch.org
+torchvision # in case you need a special version, go to https://pytorch.org
+torchaudio # in case you need a special version, go to https://pytorch.org
 soundfile 
 librosa
 chevron
-torch
 TTS
 flask_cors
 llama-cpp-python
 huggingface-hub
+accelerate
+git+https://github.com/huggingface/diffusers
 celery 
 redis
+accelerate
+numpy==1.26.4
+#peft # in case of LoRa usage

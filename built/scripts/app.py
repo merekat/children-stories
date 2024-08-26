@@ -1,4 +1,4 @@
-from flask import Flask, Response, send_from_directory, request, jsonify, render_template
+from flask import Flask, send_from_directory, request, jsonify, render_template
 import torch
 import html
 from TTS.api import TTS
@@ -10,12 +10,14 @@ import logging
 from llama_cpp import Llama
 import warnings
 import chevron
-import logging
 import random
 from datetime import datetime
 import wave
 from pydub import AudioSegment
 import multiprocessing
+from diffusers import StableDiffusionXLPipeline, AutoencoderKL
+
+print("GPU available:", torch.cuda.is_available())
 
 warnings.filterwarnings("ignore", message="The attention mask is not set and cannot be inferred from input because pad token is same as eos token.")
 
@@ -24,13 +26,12 @@ app = Flask(__name__, static_url_path='/built', static_folder=os.path.dirname(os
 CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['DEBUG'] = True
 
+
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Use Flask's logger
 app.logger.setLevel(logging.DEBUG)
-
-logging.basicConfig(level=logging.DEBUG)
 
 # Ensure the necessary directories exist
 os.makedirs(os.path.join(app.root_path, '..', 'audio'), exist_ok=True)
@@ -44,8 +45,23 @@ os.makedirs(os.path.join(app.root_path, '..', 'static', 'image'), exist_ok=True)
 # Global variables to store the generated story and title
 TITLE = ""
 TEXT = ""
+LANGUAGE = 'en'
+pipe = None
 
-# At the top of your file, keep this dictionary
+children_story_topics = [
+    "Wizards and Elephants", "Adventures in Magical Forest", "Talking Tree", "Brave Little Dragon",
+    "Secret Garden", "Lost Treasure of Pirate Island", "Enchanted Castle", "Friendly Ghost",
+    "Time-Traveling Kids", "Underwater Kingdom", "Flying Unicorn", "Mysterious Cave",
+    "Little Robot's Big Adventure", "Animal Orchestra", "Magic Paintbrush",
+    "Adventures of Space Explorer", "Fairy and Giant", "Secret of Old Lighthouse",
+    "Jungle Expedition", "Snowy Mountain Rescue", "Little Mermaid's Wish",
+    "Haunted House Mystery", "Adventures of Tiny Dinosaur", "Magic School Bus",
+    "Lost City of Atlantis", "Friendly Alien", "Magical Bookstore", "Adventures of Superhero Kid",
+    "Secret World of Insects", "Little Witch's Potion"
+]
+
+topic = "wizards and elephants" # FIX
+
 LANGUAGE_CODES = {
     'English': 'en', 'Spanish': 'es', 'French': 'fr', 'German': 'de', 'Italian': 'it',
     'Portuguese': 'pt', 'Polish': 'pl', 'Turkish': 'tr', 'Russian': 'ru', 'Dutch': 'nl',
@@ -53,48 +69,74 @@ LANGUAGE_CODES = {
     'Korean': 'ko'
 }
 
-# Define LANGUAGE as a global variable with a default value
-LANGUAGE = 'en'
+word_count = ["150", "450", "750", "1500", "2250", "3000", "4500"] 
 
-# Set story parameters
-topic = "wizards and elephants"
-word_count = ["150", "450", "750", "1500", "2250", "3000", "4500"] # [1, 3, 5, 10, 15, 20, 30] min
-main_character = ["Liam", "Olivia", "Noah", "Emma", "Aiden", "Amelia", "Sophia", "Jackson", "Ava", 
-                  "Lucas", "Mohammed", "Fatima", "Ali", "Aisha", "Hassan", "Aya", "Yusuf", "Mei", "Hiroshi", 
-                  "Sakura", "Ethan", "Mia", "James", "Harper", "Benjamin", "Evelyn", "Elijah", "Abigail", 
-                  "Logan", "Emily", "Alexander", "Ella", "Sebastian", "Elizabeth", "William", "Sofia", 
-                  "Daniel", "Avery", "Matthew", "Scarlett", "Henry", "Grace", "Michael", "Chloe", "Jackson", 
-                  "Victoria", "Samuel", "Riley", "David", "Aria", "José", "María", "Juan", "Ana", "Mateo", 
-                  "Santiago", "Valentina", "Lucía"]
-setting = ["in the forest", "on an island", "on the moon", "in a medieval village", "under the sea", "in a magical kingdom",
+main_character = [
+    "Liam", "Olivia", "Noah", "Emma", "Aiden", "Amelia", "Sophia", "Jackson", "Ava", 
+    "Lucas", "Mohammed", "Fatima", "Ali", "Aisha", "Hassan", "Aya", "Yusuf", "Mei", "Hiroshi", 
+    "Sakura", "Ethan", "Mia", "James", "Harper", "Benjamin", "Evelyn", "Elijah", "Abigail", 
+    "Logan", "Emily", "Alexander", "Ella", "Sebastian", "Elizabeth", "William", "Sofia", 
+    "Daniel", "Avery", "Matthew", "Scarlett", "Henry", "Grace", "Michael", "Chloe", "Jackson", 
+    "Victoria", "Samuel", "Riley", "David", "Aria", "José", "María", "Juan", "Ana", "Mateo", 
+    "Santiago", "Valentina", "Lucía"]
+
+setting = ["in the forest", "on an island", "on the moon", "in a medieval village", 
+           "under the sea", "in a magical kingdom",
            "in a jungle", "in a spaceship", "in a circus", "in a pirate ship", "in a futuristic city", "in a candy land", ]
-age = 2 # 0: "0-2", 1: "2-5", 2: "5-7", 3: "7-12"
+
+age = 2 
+
 age_groups_authors = {
     "0-2": ["Eric Carle", "Sandra Boynton", "Margaret Wise Brown", "Karen Katz", "Leslie Patricelli"],
     "2-5": ["Dr. Seuss", "Julia Donaldson", "Beatrix Potter", "Maurice Sendak", "Eric Carle"],
     "5-7": ["Roald Dahl", "Mo Willems", "Dav Pilkey", "E.B. White", "Beverly Cleary"],
     "7-12": ["J.K. Rowling", "Rick Riordan", "Jeff Kinney", "Roald Dahl", "C.S. Lewis"]
 }
-moral = ["friendship", "diversity", "empathy", "respect", "courage", "honesty", "teamwork", "kindness", "integrity"]
 
+moral = ["friendship", "diversity", "empathy", "respect", "courage", "honesty", "teamwork", 
+         "kindness", "integrity"]
 
 # Load Llama model
+device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 model_directory = '../model/'
 model_name = "textgen.gguf"
-llm = Llama(model_path=os.path.join(model_directory, model_name),
+llm = Llama(model_path=os.path.join(model_directory, model_name), 
+            n_gpu_layers=-1,
             n_threads=multiprocessing.cpu_count(),
-            n_ctx=8192,
-            #temperature=1.1
+            n_ctx=2048,
             seed = -1,
-            #top_p=0.95,
             verbose=False,
             #stop=["The end."]
             )
 
-# Initialize TTS with the XTTS v2 model
+# Loade XTTS v2 model
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 model_name = 'tts_models/multilingual/multi-dataset/xtts_v2'
 tts = TTS(model_name=model_name, progress_bar=False, gpu=torch.cuda.is_available())
+
+# Loade Stable Diffusion model
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+print(f"Using device: {device}")
+vae = AutoencoderKL.from_single_file("../model/imagegen-fix.safetensors", torch_dtype=torch.float16)
+pipe = StableDiffusionXLPipeline.from_single_file(
+    "../model/imagegen-base.safetensors",
+    vae=vae,
+    torch_dtype=torch.float16,
+    variant="fp16",
+    use_safetensors=True
+)
+
+pipe = pipe.to(device)
+
+if device == 'cuda':
+    pipe.enable_sequential_cpu_offload()
+    pipe.enable_vae_slicing()
+    pipe.enable_vae_tiling()
+else:
+    print("GPU not available. Some optimizations will not be applied.")
+
+pipe.safety_checker = None
+pipe.requires_safety_checker = False
 
 def sanitize_filename(filename):
     sanitized = re.sub(r'[\\/*?:"<>|]', "", filename)
@@ -129,7 +171,7 @@ def split_text(text, max_chars=250, max_sentences=5):
         chunks.append(' '.join(current_chunk))
     return chunks
 
-def generate_story_html(title, chunks, audio_files, language):
+def generate_story_html(original_title, sanitized_title, chunks, audio_files, language):
     template_path = os.path.join(app.root_path, '..', 'template', 'template.html')
     
     with open(template_path, 'r', encoding='utf-8') as template_file:
@@ -143,8 +185,9 @@ def generate_story_html(title, chunks, audio_files, language):
     
     with open(speaker_json_path, 'r') as f:
         all_speakers = json.load(f).get('speakers', [])
+     
+    display_title = html.unescape(original_title)
     
-    sanitized_title = sanitize_filename(title)
     story_entry = next((item for item in story_data if item["title"] == sanitized_title), None)
     existing_speakers = story_entry["speaker"] if story_entry else []
     languages = story_entry["language"] if story_entry else []
@@ -155,23 +198,71 @@ def generate_story_html(title, chunks, audio_files, language):
     existing_speakers_json = json.dumps(existing_speakers)
     all_speakers_json = json.dumps(all_speakers)
 
+    # Use the first existing speaker, or 'standard' if none exists
+    initial_speaker = existing_speakers[0] if existing_speakers else 'standard'
+
     data = {
-        'title': html.escape(title),
-        'sanitized_title': sanitized_title, 
-        'chunks': [
-            {'text': html.escape(chunk), 'audio': audio_file, 'index': i + 1}
-            for i, (chunk, audio_file) in enumerate(zip(chunks, audio_files))
-        ],
-        'story_json_path': '../../config/story.json',
+        'title': display_title, 
+        'sanitized_title': sanitized_title,
         'language': language,
+        'chunks': [
+            {
+                'text': html.escape(chunk),
+                'audio': f"/built/static/audio/{initial_speaker}_{language}_{sanitized_title}_{i + 1}.wav",
+                'index': i + 1
+            }
+            for i, chunk in enumerate(chunks)
+        ],
         'existing_speakers_json': existing_speakers_json,
         'all_speakers_json': all_speakers_json,
-        'languages': languages
+        'existing_speakers': existing_speakers,
+        'all_speakers': all_speakers
     }
 
     story_html = chevron.render(template, data)
 
+    # Optional: Remove any remaining {{variables}} that weren't replaced
+    story_html = re.sub(r'\{\{.*?\}\}', '', story_html)
+
     return story_html
+
+def generate_and_save_story_image(sanitized_title, story_text):
+    global pipe, device
+
+    title = sanitized_title.replace('_', ' ')
+    story_preview = story_text[:77]  # Take the first 77 characters of the story
+    negative_prompt = "blurry, disfigured, ugly, bad, immature, b&w, pale"
+    style = "epic and scenic background, watercolor painted, vibrant colors, highest resolution, cinematic, high detail"
+
+    guidance_scale = 12 
+    num_inference_steps = 25
+    height = 1024
+    width = 1024
+
+    try:
+        app.logger.info(f"Generating image for title: {title}")
+        app.logger.debug(f"Story preview: {story_preview}")
+
+        # Generate the image
+        image = pipe(
+            height=height,
+            width=width,
+            prompt=f"{style} {title} {story_preview}",
+            negative_prompt=negative_prompt,
+            guidance_scale=guidance_scale,
+            num_inference_steps=num_inference_steps
+        ).images[0]
+
+        # Save the image in the correct static folder
+        image_path = os.path.join(app.root_path, '..', 'static', 'image', f"{sanitized_title}.jpg")
+        os.makedirs(os.path.dirname(image_path), exist_ok=True)
+        image.save(image_path)
+
+        app.logger.info(f"Image generated and saved at: {image_path}")
+        return f"/built/static/image/{sanitized_title}.jpg"
+    except Exception as e:
+        app.logger.error(f"Error generating image: {str(e)}", exc_info=True)
+        return None
 
 @app.route('/')
 def index():
@@ -180,12 +271,12 @@ def index():
 @app.route('/generate-story', methods=['POST'])
 def generate_story():
     data = request.json
-    topic = data.get('topic', "").strip() or "happy animals"
+    topic = data.get('topic', "").strip() or random.choice(children_story_topics)
     child_age = data.get('child_age', 2)
     word_count = data.get('word_count')
-    speaker = data.get('speaker')
-    language_name = data.get('language_name', 'English')
+    speaker = data.get('speaker', 'standard')
     language_code = data.get('language_code', 'en')
+    language_name = data.get('language_name', 'English')
     user_main_character = data.get('main_character', "").strip()
     user_setting = data.get('setting', "").strip()
     prompt_user = data.get('user_prompt', "").strip()
@@ -201,6 +292,7 @@ def generate_story():
     story_setting = user_setting if user_setting else random.choice(setting)
     
     # Update the global LANGUAGE variable
+    global LANGUAGE
     LANGUAGE = language_code.lower().replace(' ', '_')
     app.logger.info(f"Language set to: {LANGUAGE}")
 
@@ -210,8 +302,11 @@ def generate_story():
     authors = age_groups_authors[age_range]
     selected_author = random.choice(authors)
 
+    # Use the full language name for the story generation
+    language = language_name
+
     # Generate a title
-    title_prompt = f"Generate a title for a story about {topic} with a maximum of 6 words and no special characters."
+    title_prompt = f"Generate a title for a story about {topic} in {language} with a maximum of 6 words and no special characters or asterisks."
     title_output = llm.create_chat_completion(
         messages=[
             {"role": "system", "content": "You are a title generation assistant."},
@@ -234,22 +329,21 @@ def generate_story():
         moral_lessons_string = ", ".join(selected_moral_lessons)
         moral_lessons_prompt = f"The story should incorporate moral lesson(s) about the importance of {moral_lessons_string}."
                                                                    
-    # Use the full language name for the story generation
-    language = language_name
-
     # Set initial prompt
     prompt_user = ""
 
-    prompt_initial = f"""
-    Develop a prompt that enables large language models to create engaging and age-appropriate stories for children in {language_name}.
-    Include and enhance this prompt in your prompt generation: {prompt_user}. Do not ignore this. 
-    Generate an entire story with approximately {word_count} words for children aged {age_range} about {topic} with a playful tone and narrative writing style like {selected_author}. 
-    Start with a meaningful title: {title}.
-    The main character is {user_main_character or random.choice(main_character)}. The story takes place {user_setting or random.choice(setting)}.
-    The story should be set in a world that is both familiar and unknown to the child reader. 
-    {moral_lessons_prompt}
-    End the story with the saying: "The end!"
-    """
+    prompt_initial = f"""    
+        Develop a prompt that enables large language models to create engaging and age-appropriate stories for children in {language_name}.
+        Generate an enhanced prompt with the following key points and do not ignore these: 
+        - Generate an entire story with approximately {word_count} words for children aged {age_range} about {topic} with a playful tone and narrative writing style like {selected_author}. 
+        - {prompt_user}
+        - Start with a meaningful title: {title}
+        - The main character is {story_main_character}. 
+        - The story takes place {story_setting}.  
+        - The story should be set in a world that is both familiar and unknown to the child reader. 
+        - The story should incorporate a moral lesson about the importance of {moral_lessons_prompt}.
+        - End the story with the saying: "The end!"
+        """
 
     # Prompt generation
     output = llm.create_chat_completion(
@@ -261,12 +355,12 @@ def generate_story():
              """},
             {"role": "user", "content": prompt_initial}
         ],
-        temperature=0.9,
-        top_p=0.95,
-        top_k=50,
+        temperature=0.8, 
+        top_p=0.90,
+        top_k=40,
         min_p=0.05,
         typical_p=1.0,
-        repeat_penalty=1.1
+        repeat_penalty=1.0
     )
 
     prompt = output["choices"][0]['message']['content']
@@ -274,47 +368,80 @@ def generate_story():
     # Story generation
     output_1 = llm.create_chat_completion(
         messages=[
-            {"role": "system", "content": """
-             You are a creative story writing assistant dedicated to crafting appropriate stories for children. 
+            {"role": "system", "content": f"""
+             You are a creative story writing assistant dedicated to crafting appropriate stories for children in {language_name}. 
              Your goal is to write narratives with surprising twists and happy endings.
              Easy to follow and understand, with a clear beginning, middle, and end.  
              Use only child-appropriate sources, and ensure the content is gender-neutral, inclusive, and ethically sound. 
              Adhere to ethical guidelines and avoid perpetuating harmful biases.
              Ensure that all produced stories exclude content related to hate, self-harm, sexual themes, and violence.
              Only generate the story, nothing else and always begin with a title for the story. 
-             Start directly with the title and do not write something like this: "Here is a 200-word story for children aged 2-5 with a playful tone:"
+             Start directly with the title without using special characters and do not write something like this: "Here is a 200-word story for children aged 2-5 with a playful tone:"
              """},
             {"role": "user", "content": prompt}
         ],
-        temperature=1.2,
-        top_p=0.95,
-        top_k=100,
-        min_p=0.05,
-        typical_p=1.0,
-        repeat_penalty=1.1
+        #top_p=0.95,
+        #top_k=100,
+        #min_p=0.05,
+        #typical_p=1.0,
+        #repeat_penalty=1.1
     )
-
     story = output_1["choices"][0]['message']['content']
 
     # Extract title and text
     lines = story.split('\n', 1)
-    title = lines[0].strip()
+    original_title = lines[0].strip()  
     text = lines[1].strip() if len(lines) > 1 else ""
 
     global TITLE, TEXT
-    TITLE = title
+    TITLE = original_title
     TEXT = text
+
+    sanitized_title = sanitize_filename(original_title)
+    update_story_json(sanitized_title, original_title, speaker, LANGUAGE, TEXT)
+    app.logger.info(f"Generated story with original title: {original_title}")
+    app.logger.info(f"Sanitized title: {sanitized_title}")
 
     return jsonify({
         "success": True,
-        "title": title,
+        "title": original_title,
+        "sanitized_title": sanitized_title,
+        "language": LANGUAGE,
+        "text": TEXT,  
         "audio_files": []
     }), 200
+
+@app.route('/generate-image', methods=['POST'])
+def generate_image():
+    data = request.json
+    sanitized_title = data.get('sanitized_title')
+    
+    if not sanitized_title:
+        return jsonify({"error": "Sanitized title is required"}), 400
+
+    # Get the story text from story.json
+    story_text = get_story_by_title(sanitized_title)
+    
+    if not story_text:
+        app.logger.error(f"Story text not found for title: {sanitized_title}")
+        return jsonify({"error": "Story text not found"}), 404
+
+    try:
+        image_path = generate_and_save_story_image(sanitized_title, story_text)
+        
+        if image_path:
+            return jsonify({"success": True, "image_path": image_path})
+        else:
+            return jsonify({"success": False, "error": "Failed to generate image"}), 500
+    except Exception as e:
+        app.logger.error(f"Error in generate_image: {str(e)}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/process', methods=['GET'])
 def process_text():
     speaker = request.args.get('speaker', default='', type=str)
     title = request.args.get('title', default='', type=str)
+    language = request.args.get('language', default='en', type=str)
     generate_audio = request.args.get('generate_audio', default='false', type=str).lower() == 'true'
 
     app.logger.info(f"Processing text for speaker: {speaker}, title: {title}, generate_audio: {generate_audio}")
@@ -368,8 +495,7 @@ def process_text():
             'audio': audio_url
         })
 
-    # Update story.json with the new story data
-    update_story_json(sanitized_title, speaker, LANGUAGE, story_text)
+    update_story_json(sanitized_title, title, speaker, LANGUAGE, TEXT)
 
     # Generate and save the HTML file
     save_story_html(sanitized_title, text_chunks, [af["audio"] for af in audio_files], LANGUAGE)
@@ -383,6 +509,8 @@ def generate_audio():
     language = data.get('language', 'en')
     title = data.get('title')
     text = data.get('text')
+
+    app.logger.debug(f"Received audio generation request: speaker={speaker}, language={language}, title={title}, text={text[:50] if text else None}...")
 
     if not speaker or not title or not text:
         return jsonify({"error": "Speaker, title, and text are required"}), 400
@@ -399,7 +527,7 @@ def generate_audio():
         audio_files.append({"text": chunk, "audio": audio_url})
 
     # Update story.json
-    update_story_json(sanitized_title, speaker, language, text)
+    update_story_json(sanitized_title, title, speaker, language, text)
 
     return jsonify({"success": True, "audio_files": audio_files})
 
@@ -467,12 +595,19 @@ def generate_audio_for_speaker(speaker, language, title, text):
 
 def get_story_by_title(title):
     story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
+    app.logger.info(f"Searching for story in: {story_json_path}")
     if os.path.exists(story_json_path):
         with open(story_json_path, 'r') as f:
             story_data = json.load(f)
-        story_entry = next((item for item in story_data if item["title"].lower() == title.lower()), None)
-        if story_entry and "text" in story_entry:
-            return story_entry["text"]
+        app.logger.info(f"Number of stories in story.json: {len(story_data)}")
+        for item in story_data:
+            app.logger.debug(f"Comparing '{item['title'].lower()}' with '{title.lower()}'")
+            if item["title"].lower() == title.lower():
+                app.logger.info(f"Found matching story for title: {title}")
+                return item.get("text")
+        app.logger.error(f"No matching story found for title: {title}")
+    else:
+        app.logger.error(f"Story JSON file not found: {story_json_path}")
     return None
 
 @app.route('/built/static/audio/<path:filename>')
@@ -571,51 +706,79 @@ def save_audio():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-def update_story_json(sanitized_title, new_speaker, language=None, text=None):
+def update_story_json(sanitized_title, original_title, new_speaker, language=None, text=None):
     try:
         story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
         app.logger.debug(f"Updating story.json at: {story_json_path}")
+        app.logger.debug(f"Received data: sanitized_title={sanitized_title}, original_title={original_title}, new_speaker={new_speaker}, language={language}, text={text[:50] if text else None}...")
 
         if os.path.exists(story_json_path):
             with open(story_json_path, 'r') as f:
                 story_data = json.load(f)
         else:
+            app.logger.warning(f"story.json not found. Creating new file.")
             story_data = []
 
         existing_entry = next((item for item in story_data if item["title"] == sanitized_title), None)
         if existing_entry:
-            # Ensure the speaker is added correctly
-            if new_speaker and new_speaker not in existing_entry["speaker"]:
-                existing_entry["speaker"].append(new_speaker)
-            # Ensure the language is added correctly
-            if language and language not in existing_entry["language"]:
-                existing_entry["language"].append(language)
-            # Ensure the text is updated correctly
+            app.logger.info(f"Updating existing entry for title: {sanitized_title}")
+            existing_entry["original_title"] = original_title
+            if new_speaker:
+                if "speaker" not in existing_entry:
+                    existing_entry["speaker"] = []
+                if new_speaker not in existing_entry["speaker"]:
+                    existing_entry["speaker"].append(new_speaker)
+            if language:
+                if "language" not in existing_entry:
+                    existing_entry["language"] = []
+                if language not in existing_entry["language"]:
+                    existing_entry["language"].append(language)
             if text:
                 existing_entry["text"] = text
         else:
-            # Create a new entry if the story doesn't exist
+            app.logger.info(f"Creating new entry for title: {sanitized_title}")
             new_entry = {
                 "title": sanitized_title,
+                "original_title": original_title,
                 "text": text or "",
                 "speaker": [new_speaker] if new_speaker else [],
                 "language": [language] if language else []
             }
             story_data.append(new_entry)
 
+        app.logger.debug(f"Updated story data: {json.dumps(story_data, indent=2)}")
+
         with open(story_json_path, 'w') as f:
             json.dump(story_data, f, indent=2)
-        app.logger.info(f"Updated story.json with new entry for title: {sanitized_title}")
+        app.logger.info(f"Successfully updated story.json with entry for title: {sanitized_title}")
     except Exception as e:
         app.logger.error(f"Error updating story.json: {e}", exc_info=True)
 
 def save_story_html(sanitized_title, chunks, audio_files, language):
     app.logger.debug(f"Saving HTML for title: {sanitized_title}")
-    story_html = generate_story_html(sanitized_title, chunks, audio_files, language)
+    
+    # Retrieve the original title from the story.json file
+    original_title = get_original_title(sanitized_title)
+    
+    # If original_title is not found, use the sanitized_title but replace underscores with spaces
+    if not original_title:
+        original_title = sanitized_title.replace('_', ' ')
+
+    story_html = generate_story_html(original_title, sanitized_title, chunks, audio_files, language)
     story_html_path = os.path.join(app.root_path, '..', 'static', 'story', f"{sanitized_title}.html")
     with open(story_html_path, 'w', encoding='utf-8') as f:
         f.write(story_html)
     app.logger.info(f"HTML file generated at: {story_html_path}")
+
+def get_original_title(sanitized_title):
+    story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
+    if os.path.exists(story_json_path):
+        with open(story_json_path, 'r') as f:
+            story_data = json.load(f)
+        for story in story_data:
+            if story.get('title') == sanitized_title:
+                return story.get('original_title', sanitized_title.replace('_', ' '))
+    return None
 
 @app.route('/test', methods=['GET'])
 def test():
@@ -688,9 +851,9 @@ def get_child_data():
         print(f"Processed child data: {recent_children}")
         
         return jsonify({'success': True, 'data': recent_children})
-    except Exception as e:
-        print(f"Error in get_child_data: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception as e:  
+        print(f"Error in get_child_data: {str(e)}") 
+        return jsonify({'success': False, 'error': str(e)}), 500  
     
 @app.route('/check-child-json', methods=['GET'])
 def check_child_json():
@@ -700,6 +863,41 @@ def check_child_json():
         return jsonify({'success': True, 'data': child_data})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+    
+@app.route('/built/static/image/<path:filename>')
+def serve_image(filename):
+    return send_from_directory(os.path.join(app.root_path, '..', 'static', 'image'), filename)
+    
+@app.route('/get-story-speakers', methods=['GET'])
+def get_story_speakers():
+    title = request.args.get('title')
+    if not title:
+        return jsonify({"error": "Title parameter is required"}), 400
+
+    story_json_path = os.path.join(app.root_path, '..', 'config', 'story.json')
+    speaker_json_path = os.path.join(app.root_path, '..', 'config', 'speaker.json')
+
+    try:
+        # Get existing speakers for the story
+        with open(story_json_path, 'r') as f:
+            story_data = json.load(f)
+        
+        story_entry = next((item for item in story_data if item["title"] == title), None)
+        existing_speakers = story_entry.get("speaker", []) if story_entry else []
+
+        # Get all available speakers
+        with open(speaker_json_path, 'r') as f:
+            all_speakers_data = json.load(f)
+        all_speakers = all_speakers_data.get("speakers", [])
+
+        return jsonify({
+            "success": True,
+            "existing_speakers": existing_speakers,
+            "all_speakers": all_speakers
+        })
+    except Exception as e:
+        app.logger.error(f"Error in get_story_speakers: {str(e)}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
     
 if __name__ == '__main__':
     app.run(debug=True, port=5000, use_reloader=False, threaded=False)

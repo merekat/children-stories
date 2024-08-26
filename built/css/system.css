@@ -20,6 +20,9 @@
    --color-second-h: 138;
    --color-second-s: 26%;
    --color-second-l: 60%;
+   --color-action-h: 138;
+   --color-action-s: 26%;
+   --color-action-l: 60%;
 }
 
 body {
@@ -35,6 +38,7 @@ body {
     --font-size-095: calc(var(--text-base-size)*0.95);
     --font-size-1: calc(var(--text-base-size)*1);
     --font-size-125: calc(var(--text-base-size)*1.25);
+        --font-size-135: calc(var(--text-base-size)*1.35);
     --font-size-15: calc(var(--text-base-size)*1.5);
     --font-size-175: calc(var(--text-base-size)*1.75);
     --font-size-2: calc(var(--text-base-size)*2);
@@ -682,6 +686,11 @@ a:focus {
     outline-offset: 5px;
 }
 
+#gallery-container a:focus {
+    outline: none;
+    outline-offset: 5px;
+}
+
 a:visited {
     color: var(--color-first-dark-5);
 }
@@ -719,19 +728,14 @@ a:visited {
 
 /*  =================== MARKER =================== */
 
-::-moz-selection {
-    background: var(--color-action);
-    color: var(--white);
-}
-
 ::selection {
-    background: var(--color-action);
-    color: var(--white);
+    background: transparent;
+    color: var(--color-action);
 }
 
 ::-moz-selection {
-    background: var(--color-action);
-    color: var(--white);
+    background: transparent;
+    color: var(--color-action);
 }
 
 video::-moz-selection,
@@ -1095,8 +1099,11 @@ button[disabled]:visited {
 
 button:focus {
     outline: none;
-    box-shadow: 0 0 0 5px var(--white),
-        0 0 0 10px var(--color-action);
+
+}
+
+button.play-button:focus {
+    box-shadow: none;
 }
 
 ::-moz-focus-inner {

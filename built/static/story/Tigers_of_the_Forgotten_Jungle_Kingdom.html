@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tigers_of_the_Forgotten_Jungle_Kingdom</title>
+
+    <link rel="icon" href="../../image/favicon.ico" sizes="48x48">
+    <link rel="icon" href="../../image/favicon.svg" sizes="any" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="../../image/apple-touch-icon.png">
+
+    <link rel="stylesheet" type="text/css" href="../../css/normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../css/system.css">
+    <link rel="stylesheet" type="text/css" href="../../css/story.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+
+<div id="menu" class="flex">
+    <a href="../../index.html" title="Go to Homepage">
+        <img src="../../image/bookmark.png" alt="Logo">
+        <img src="../../image/logo.png" alt="Logo">
+
+    </a>
+</div>
+
+<body>
+
+    <div id="content" class=" container speaker-selection">
+
+        <div class="story-image-container"
+            style="background-image: url('/built/static/image/Tigers_of_the_Forgotten_Jungle_Kingdom.jpg');">
+        </div>
+
+
+        <h2 id="storyTitle" class="story-title">Tigers_of_the_Forgotten_Jungle_Kingdom</h2>
+        <div class="speaker-select flex">
+            <div>
+                <label for="existingSpeakers">Current Speaker</label>
+                <select id="existingSpeakers" name="existingSpeakers">
+                    <option value="standard">standard</option>
+                </select>
+            </div>
+            <div>
+                <label for="allSpeakers">Select New Speaker</label>
+                <select id="allSpeakers" name="allSpeakers">
+                    <option value="">Select a new speaker</option>
+                    <option value="michel">michel</option>
+                    <option value="nobu">nobu</option>
+                    <option value="simon">simon</option>
+                    <option value="alex_de">alex_de</option>
+                    <option value="alex_en">alex_en</option>
+                    <option value="deniz">deniz</option>
+                </select>
+            </div>
+
+            <button id="generateButton" disabled>Generate Audio</button>
+        </div>
+        <div id="generationStatus"></div>
+
+        <div id="audioChunks">
+            <div class="chunk" data-index="1">
+                <button class="play-button"><i class="fas fa-play"></i></button>
+                <p>In the heart of India, where the sun shines bright,
+                    Lived Bjorn, a tiger, with a coat of golden light. He roamed the Forgotten Jungle Kingdom, so grand,
+                    With its towering trees, and its winding sand.</p>
+                <audio src="/built/static/audio/standard_en_Tigers_of_the_Forgotten_Jungle_Kingdom_1.wav"
+                    style="display: none;"></audio>
+            </div>
+            <div class="chunk" data-index="2">
+                <button class="play-button"><i class="fas fa-play"></i></button>
+                <p>Bjorn loved to explore, with his curious eyes,
+                    He&#x27;d chase after butterflies, and watch the clouds rise. He&#x27;d play with the monkeys, and
+                    laugh with glee,
+                    In the jungle&#x27;s magic, where wonder waited to see.</p>
+                <audio src="/built/static/audio/standard_en_Tigers_of_the_Forgotten_Jungle_Kingdom_2.wav"
+                    style="display: none;"></audio>
+            </div>
+            <div class="chunk" data-index="3">
+                <button class="play-button"><i class="fas fa-play"></i></button>
+                <p>One day, while wandering, Bjorn stumbled upon a clue,
+                    A hidden treasure map, with a riddle or two. He followed the path, through the jungle so dark,
+                    And discovered a secret, that left him in a spark.</p>
+                <audio src="/built/static/audio/standard_en_Tigers_of_the_Forgotten_Jungle_Kingdom_3.wav"
+                    style="display: none;"></audio>
+            </div>
+            <div class="chunk" data-index="4">
+                <button class="play-button"><i class="fas fa-play"></i></button>
+                <p>A hidden waterfall, with a pool so blue,
+                    Reflected the stars, and the moon shining through. Bjorn drank from the pool, and felt refreshed and
+                    new,
+                    And knew that he&#x27;d found, a treasure true.</p>
+                <audio src="/built/static/audio/standard_en_Tigers_of_the_Forgotten_Jungle_Kingdom_4.wav"
+                    style="display: none;"></audio>
+            </div>
+            <div class="chunk" data-index="5">
+                <button class="play-button"><i class="fas fa-play"></i></button>
+                <p>The jungle creatures, all gathered &#x27;round,
+                    To celebrate Bjorn&#x27;s find, with a joyful sound. The monkeys danced, and the birds sang with
+                    glee,
+                    In the Forgotten Jungle Kingdom, where wonder waited to see.</p>
+                <audio src="/built/static/audio/standard_en_Tigers_of_the_Forgotten_Jungle_Kingdom_5.wav"
+                    style="display: none;"></audio>
+            </div>
+            <div class="chunk" data-index="6">
+                <button class="play-button"><i class="fas fa-play"></i></button>
+                <p>Bjorn returned home, with a heart full of cheer,
+                    And a story to tell, of his jungle adventure so clear. He learned that day, that the jungle&#x27;s
+                    secrets are vast,
+                    And that with curiosity, and courage, we can discover at last.</p>
+                <audio src="/built/static/audio/standard_en_Tigers_of_the_Forgotten_Jungle_Kingdom_6.wav"
+                    style="display: none;"></audio>
+            </div>
+        </div>
+
+        <div id="speakerData" data-existing-speakers='["standard"]'
+            data-all-speakers='["michel", "nobu", "simon", "alex_de", "alex_en", "deniz"]'>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Pass necessary data to JavaScript
+        const storyData = {
+            originalTitle: "Tigers_of_the_Forgotten_Jungle_Kingdom",
+            sanitizedTitle: "Tigers_of_the_Forgotten_Jungle_Kingdom",
+            language: "en"
+        };
+        // Function to replace underscores with spaces
+        function formatTitle(title) {
+            return title.replace(/_/g, ' ');
+        }
+
+        // Apply the formatting when the document is ready
+        $(document).ready(function () {
+            const formattedTitle = formatTitle(storyData.originalTitle);
+            document.title = formattedTitle;
+            $('#storyTitle').text(formattedTitle);
+        });
+    </script>
+
+    <script src="../../js/story.js"></script>
+</body>
+
+</html>

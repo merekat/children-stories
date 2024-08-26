@@ -1,6 +1,15 @@
-# ChildGPT
+# <font color="red"> OhanashiGPT </font>
+
+![alt text](/built/image/The_Golden_Dragons_Ancient_Secret_Revealed.jpg "Title")
 
 ChildGPT is an innovative application that creates custom children's stories based on input parameters such as age and other preferences. What sets this app apart is its ability to narrate these stories using an AI-generated voice that mimics a parent or loved one, trained on their voice samples. Additionally, the app generates captivating images to accompany each story, providing a unique and engaging experience for children.
+
+
+# Childrens' Book Generation App
+
+![alt text](/built/image/screenshot.png "Title")
+
+The app runs as a web interface where you can customize your story settings. Hitting the "Generate Story" button will create you a story, a cover picture and corresponding audio files that read the story to the user. You can find already existing stories in the "Explore" section. An already existing story can be set to music with a different voice. It is also possible to add your own voice to the existing speaker list. 
 
 ## Features
 
@@ -9,58 +18,17 @@ ChildGPT is an innovative application that creates custom children's stories bas
 - **Image Generation**: Automatically creates illustrations to accompany the stories.
 - **Interactive Experience**: Engaging storytelling for children, even when parents can't be there in person.
 
-## Installation
+## Try out our app  
+To run the app locally you have to install the depencies, download the models and start the server. You can find a detailed instruction [here](https://github.com/merekat/children-stories/blob/main/app_instruction.md).
 
-1. **Clone the Repository**
 
-   ```bash
-   git clone
-   ```
 
-2. **Activate the Environment**
+# DIY Tutorials
 
-   ```bash
-   python -m .venv venv
-   source venv/bin/activate
-   ```
+- [Finetuning large language models (LLMs) using Quantized Low Rank Adapters (QLoRA)](https://github.com/merekat/children-stories/tree/main/Tutorials/LLM_QLoRA) <font color="red"> @Nobu You are in charge of making this notebook </font>
 
-3. **Install Dependencies**
+- [Deniz's stuff](https://) <font color="red"> @Deniz You are in charge of making this notebook. </font>
 
-   ```bash
-   pip install -r requirements.txt
-    ```
+- [Alex's stuff](https://) <font color="red"> @Alex You are in charge of making this notebook, maybe flux related things, I don't know, it's sort of up to you. Do you have ideas? </font>
 
-4. **Download and Prepare Models**
-*   Ensure you have the model files in the built/model directory.
-*   Run text_generation.py to download and train prebuilt text generation model Lama. This might take some time.
-   
-   ```bash
-   cd text-gen
-   python text_generation.py  
-   ```
-*   Run audio_generation.py to download and train prebuilt text generation model xtts_v2. This might take some time. 
-
-   ```bash
-   cd audio-gen
-   python audio_generation.py  
-   ```
-
-*   All models will automatically be saved in the built/model directory. 
-
-## Usage
-
-1. **Run the Flask Application**
-
-   ```bash
-   cd built/scripts
-   python app.py  
-   ```
-
-2. **Access the Web Interface**
-
-*   Open your browser and navigate to http://localhost:5000/built.
-
-3. **Generate Stories**
-
-*   Input the required parameters such as age and preferences.
-*   Click the "Start Processing" button to generate and narrate the story.
+- [Simon's stuff](https://) <font color="red"> @Simon You are in charge of making this notebook. It's sort of up to you. Do you have ideas?</font>
