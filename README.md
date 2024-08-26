@@ -25,7 +25,7 @@
 
 # DIY Tutorials
 
-- [Finetuning large language models (LLMs) using Quantized Low Rank Adapters (QLoRA)](https://github.com/merekat/children-stories/tree/main/Tutorials/LLM_QLoRA) <font color="red"> @Nobu You are in charge of making this notebook </font>
+- [Finetuning large language models (LLMs) using Quantized Low-Rank Adaptation (QLoRA)](https://github.com/merekat/children-stories/tree/main/finetuning/LLM_QLoRA)
 
 - [Deniz's stuff](https://) <font color="red"> @Deniz You are in charge of making this notebook. </font>
 
