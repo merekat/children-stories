@@ -29,6 +29,6 @@ To run the app locally you have to install the depencies, download the models an
 
 - [Deniz's stuff](https://) <font color="red"> @Deniz You are in charge of making this notebook. </font>
 
-- [Alex's stuff](https://) <font color="red"> @Alex You are in charge of making this notebook, maybe flux related things, I don't know, it's sort of up to you. Do you have ideas? </font>
+- [Text-to-image: Run quantized flux1.schnell on your local GPU](https://github.com/merekat/children-stories/blob/main/text-to-image/flux1.schnell/DIY_text-to-image_flux1.schnell.ipynb)
 
 - [Simon's stuff](https://) <font color="red"> @Simon You are in charge of making this notebook. It's sort of up to you. Do you have ideas?</font>
