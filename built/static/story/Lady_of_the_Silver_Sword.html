@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lady_of_the_Silver_Sword</title>
+
+    <link rel="icon" href="../../image/favicon.ico" sizes="48x48">
+    <link rel="icon" href="../../image/favicon.svg" sizes="any" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="../../image/apple-touch-icon.png">
+
+    <link rel="stylesheet" type="text/css" href="../../css/normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../css/system.css">
+    <link rel="stylesheet" type="text/css" href="../../css/story.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+
+<div id="menu" class="flex">
+    <a href="../../index.html" title="Go to Homepage">
+        <img src="../../image/bookmark.png" alt="Logo">
+        <img src="../../image/logo.png" alt="Logo">
+
+    </a>
+</div>
+
+<body>
+
+    <div id="content" class=" container speaker-selection">
+
+        <div class="story-image-container"
+            style="background-image: url('/built/static/image/Lady_of_the_Silver_Sword.jpg');">
+        </div>
+
+
+        <h2 id="storyTitle" class="story-title">Lady_of_the_Silver_Sword</h2>
+        <div class="speaker-select flex">
+            <div>
+                <label for="existingSpeakers">Current Speaker</label>
+                <select id="existingSpeakers" name="existingSpeakers">
+                    <option value="standard">standard</option>
+                </select>
+            </div>
+            <div>
+                <label for="allSpeakers">Select New Speaker</label>
+                <select id="allSpeakers" name="allSpeakers">
+                    <option value="">Select a new speaker</option>
+                    <option value="michel">michel</option>
+                    <option value="nobu">nobu</option>
+                    <option value="simon">simon</option>
+                    <option value="alex_de">alex_de</option>
+                    <option value="alex_en">alex_en</option>
+                    <option value="deniz">deniz</option>
+                </select>
+            </div>
+
+            <button id="generateButton" disabled>Generate Audio</button>
+        </div>
+        <div id="generationStatus"></div>
+
+        <div id="audioChunks">
+            <div class="chunk" data-index="1">
+                <button class="play-button"><i class="fas fa-play"></i></button>
+                <p>In a land far, far away, where the sun shines bright,
+Lived a brave and kind knight, Maggy, with a heart full of light. She had a magical sword, with a silver blade so fine,
+That shone like the moon, and sparkled with a gentle shine.</p>
+                <audio src="/built/static/audio/standard_en_Lady_of_the_Silver_Sword_1.wav" style="display: none;"></audio>
+            </div>
+            <div class="chunk" data-index="2">
+                <button class="play-button"><i class="fas fa-play"></i></button>
+                <p>Maggy loved to explore, and help those in need,
+And one day, she set sail on a pirate ship, with a crew indeed. The captain was gruff, but lovable and kind,
+The navigator was clever, and the cook whipped up treats that were one of a kind.</p>
+                <audio src="/built/static/audio/standard_en_Lady_of_the_Silver_Sword_2.wav" style="display: none;"></audio>
+            </div>
+            <div class="chunk" data-index="3">
+                <button class="play-button"><i class="fas fa-play"></i></button>
+                <p>As they sailed through the calm waters, Maggy met a parrot so bright,
+Polly perched on her shoulder, and squawked with delight.</p>
+                <audio src="/built/static/audio/standard_en_Lady_of_the_Silver_Sword_3.wav" style="display: none;"></audio>
+            </div>
+            <div class="chunk" data-index="4">
+                <button class="play-button"><i class="fas fa-play"></i></button>
+                <p>Together they sailed to a mysterious island, hidden behind a veil of mist,
+Where a secret garden bloomed, with flowers of every color and twist. But oh no!</p>
+                <audio src="/built/static/audio/standard_en_Lady_of_the_Silver_Sword_4.wav" style="display: none;"></audio>
+            </div>
+            <div class="chunk" data-index="5">
+                <button class="play-button"><i class="fas fa-play"></i></button>
+                <p>The mischievous fairies had stolen the magical crystal,
+That kept the flowers blooming, and the garden in its ritual.</p>
+                <audio src="/built/static/audio/standard_en_Lady_of_the_Silver_Sword_5.wav" style="display: none;"></audio>
+            </div>
+            <div class="chunk" data-index="6">
+                <button class="play-button"><i class="fas fa-play"></i></button>
+                <p>Maggy knew just what to do, with her trusty silver sword in hand,
+She bravely faced the fairies, and convinced them to return the crystal to the land.</p>
+                <audio src="/built/static/audio/standard_en_Lady_of_the_Silver_Sword_6.wav" style="display: none;"></audio>
+            </div>
+            <div class="chunk" data-index="7">
+                <button class="play-button"><i class="fas fa-play"></i></button>
+                <p>The fairies were enchanted by Maggy&#x27;s kindness and bravery too,
+And they gave her a special gift, a sparkly fairy dust to make the flowers bloom anew.</p>
+                <audio src="/built/static/audio/standard_en_Lady_of_the_Silver_Sword_7.wav" style="display: none;"></audio>
+            </div>
+            <div class="chunk" data-index="8">
+                <button class="play-button"><i class="fas fa-play"></i></button>
+                <p>As Maggy and the pirate crew sailed back home, they were greeted with cheers and applause,
+And Maggy&#x27;s legend grew, as the Lady of the Silver Sword, a hero who brought joy and magic to all who knew her name. The end.</p>
+                <audio src="/built/static/audio/standard_en_Lady_of_the_Silver_Sword_8.wav" style="display: none;"></audio>
+            </div>
+        </div>
+
+        <div id="speakerData" data-existing-speakers='["standard"]'
+            data-all-speakers='["michel", "nobu", "simon", "alex_de", "alex_en", "deniz"]'>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Pass necessary data to JavaScript
+        const storyData = {
+            originalTitle: "Lady_of_the_Silver_Sword",
+            sanitizedTitle: "Lady_of_the_Silver_Sword",
+            language: "en"
+        };
+        // Function to replace underscores with spaces
+        function formatTitle(title) {
+            return title.replace(/_/g, ' ');
+        }
+
+        // Apply the formatting when the document is ready
+        $(document).ready(function () {
+            const formattedTitle = formatTitle(storyData.originalTitle);
+            document.title = formattedTitle;
+            $('#storyTitle').text(formattedTitle);
+        });
+    </script>
+
+    <script src="../../js/story.js"></script>
+</body>
+
+</html>

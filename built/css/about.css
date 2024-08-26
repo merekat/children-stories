@@ -1,0 +1,111 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f4f4f4;
+    background: radial-gradient(circle at center, 
+        #f9eac7, #f7e3b3, #f5dcA0, #f3d4a0, 
+        #f1c1a0, #f5b3b3, #f7e3b3, #f9eac7  
+    );
+    background-size: 400% 400%;
+    animation: subtleGradientAnimation 15s ease infinite; 
+}
+
+@keyframes subtleGradientAnimation {
+    0% { background-position: 0% 50%; }
+    25% { background-position: 100% 50%; }
+    50% { background-position: 50% 100%; }
+    75% { background-position: 50% 0%; }
+    100% { background-position: 0% 50%; }
+}
+
+header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+h1 {
+    color: #2c3e50;
+    font-size: 2.5em;
+}
+
+#project-description {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 40px;
+    max-width: 800px;
+}
+
+#project-description p {
+    font-size: var(--font-size-125);
+    line-height: var(--font-size-14);
+}
+
+.team-member {
+    display: flex;
+    background-color: #fff;
+    margin-bottom: 30px;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    height: 300px;
+    align-items: center;
+    padding: 0 30px;
+}
+
+.team-member img {
+    width: 200px;
+    min-width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.member-info {
+    padding: 20px;
+    flex-grow: 1;
+}
+
+.member-info h2 {
+    color: #2c3e50;
+    margin-top: 0;
+}
+
+.member-links {
+    margin-top: 15px;
+}
+
+.member-links a {
+    display: inline-block;
+    margin-right: 10px;
+    text-decoration: none;
+    color: #3498db;
+    font-weight: bold;
+}
+
+.member-links a:hover {
+    text-decoration: underline;
+}
+
+footer {
+    text-align: center;
+    margin-top: 40px;
+    color: #7f8c8d;
+}
+
+@media (max-width: 768px) {
+    .team-member {
+        flex-direction: column;
+    }
+
+    .team-member img {
+        width: 100%;
+        height: auto;
+    }
+}

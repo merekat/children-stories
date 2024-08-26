@@ -1,0 +1,71 @@
+==========
+Prompt: <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are an assistant specialized in creating prompts for large language models. 
+        Your focus is on generating prompts that helps large language models craft stories specifically for children.
+        Your task is to generate prompts exclusively. Do not write stories and do not ask questions.
+        Just create the prompt within quotation marks and do not write something like: "Here is a prompt that meets the requirements" or "This prompt should enable the large language model to generate a story that meets all the requirements, including the tone, style, and key elements specified.".<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+Develop a prompt that enables large language models to create engaging and age-appropriate stories for children in English.
+    Generate an enhanced prompt with the following key points and do not ignore these: 
+    - Generate an entire story with approximately 150 words for children aged 5-7 about happy horses with a playful tone and narrative writing style like Beverly Cleary. 
+    - The horses should fly.
+    - Start with a meaningful title.
+    - The main character is Ella. 
+    - The story takes place in a magical kingdom.  
+    - The story should be set in a world that is both familiar and unknown to the child reader. 
+    - The story should incorporate a moral lesson about the importance of kindness.<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+
+"Create a 150-word story for children aged 5-7 about happy horses with a playful tone and narrative writing style similar to Beverly Cleary. The story should feature flying horses and take place in a magical kingdom where Ella is the main character. The kingdom should be a familiar yet unknown world to the child reader, with a mix of everyday and fantastical elements. The story should convey a moral lesson about the importance of kindness, and Ella's actions should demonstrate this value. The title should be a whimsical and engaging phrase that captures the essence of the story. Use descriptive language and imaginative scenarios to bring the magical kingdom and its flying horses to life, while keeping the tone light and fun for young readers."
+==========
+Prompt: 268 tokens, 75.823 tokens-per-sec
+Generation: 145 tokens, 17.495 tokens-per-sec
+Peak memory: 4.407 GB
+==========
+Prompt: <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are a creative story writing assistant dedicated to crafting appropriate stories for children. 
+    Your goal is to write narratives with surprising twists and happy endings.
+    Easy to follow and understand, with a clear beginning, middle, and end.  
+    Use only child-appropriate sources, and ensure the content is gender-neutral, inclusive, and ethically sound. 
+    Adhere to ethical guidelines and avoid perpetuating harmful biases.
+    Ensure that all produced stories exclude content related to hate, self-harm, sexual themes, and violence.
+    Only generate the story, nothing else and always begin with a title for the story. 
+    Start directly with the title and do not write something like this: "Here is a 200-word story for children aged 2-5 with a playful tone:"<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+"Create a 150-word story for children aged 5-7 about happy horses with a playful tone and narrative writing style similar to Beverly Cleary. The story should feature flying horses and take place in a magical kingdom where Ella is the main character. The kingdom should be a familiar yet unknown world to the child reader, with a mix of everyday and fantastical elements. The story should convey a moral lesson about the importance of kindness, and Ella's actions should demonstrate this value. The title should be a whimsical and engaging phrase that captures the essence of the story. Use descriptive language and imaginative scenarios to bring the magical kingdom and its flying horses to life, while keeping the tone light and fun for young readers."- End the story with the saying: "The end!"<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+
+"Moonlight Wings and Sunshine Smiles"
+
+In the whimsical kingdom of Willowdale, where wildflowers bloomed in every color and sparkly dew drops clung to grassy hillsides, Ella lived with her horse friends. Among them was Starlight, a magnificent flying horse with wings as delicate as petals and eyes that shone like the brightest stars. One day, a gentle rain brought an unexpected storm to Willowdale. The wind was strong, and many horses struggled to find shelter.
+
+Ella remembered the wise words of her grandmother: "Kindness is like a warm blanket – it wraps around everyone." She invited all the horses to join her in her cozy stable, offering them food and shelter. Starlight's wings fluttered with joy as the horses settled in together, sharing laughter and stories of their adventures. As the storm passed, the sun broke through the clouds, casting a radiant glow over Willowdale. The horses thanked Ella for her kindness and promised to do the same whenever someone needed help. And from that day on, Willowdale was filled with moonlight wings and sunshine smiles! The end!
+==========
+Prompt: 331 tokens, 109.255 tokens-per-sec
+Generation: 225 tokens, 18.538 tokens-per-sec
+Peak memory: 4.484 GB
+==========
+Prompt: <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are a translation assistant. You translate the English input into German.<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+"Moonlight Wings and Sunshine Smiles"
+
+In the whimsical kingdom of Willowdale, where wildflowers bloomed in every color and sparkly dew drops clung to grassy hillsides, Ella lived with her horse friends. Among them was Starlight, a magnificent flying horse with wings as delicate as petals and eyes that shone like the brightest stars. One day, a gentle rain brought an unexpected storm to Willowdale. The wind was strong, and many horses struggled to find shelter.
+
+Ella remembered the wise words of her grandmother: "Kindness is like a warm blanket – it wraps around everyone." She invited all the horses to join her in her cozy stable, offering them food and shelter. Starlight's wings fluttered with joy as the horses settled in together, sharing laughter and stories of their adventures. As the storm passed, the sun broke through the clouds, casting a radiant glow over Willowdale. The horses thanked Ella for her kindness and promised to do the same whenever someone needed help. And from that day on, Willowdale was filled with moonlight wings and sunshine smiles! The end!<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+
+"Mondblumenflügel und Sonnensmiles"
+
+Im zauberhaften Königreich Willowdale, wo wilde Blumen in jeder Farbe blühten und glitzernde Tropfen Regendrohns sich an grasigen Hängen festhielten, lebte Ella zusammen mit ihren Pferdefreunden. Zu ihnen gehörte Starlight, ein prächtiger Flugpferd mit Schwingen so zart wie Blütenblätter und Augen, die leuchteten wie der hellste Stern. Eines Tages brachte ein sanfter Regen einen unerwarteten Sturm nach Willowdale. Der Wind war stark, und viele Pferde hatten Schwierigkeiten, Schutz zu finden.
+
+Ella erinnerte sich an die weisen Worte ihrer Großmutter: "Großzügigkeit ist wie ein warmes Deckchen – sie umhüllt jeden." Sie lud alle Pferde zu sich in ihr gemütliches Stall, bot ihnen Nahrung und Schutz an. Starlights Flügel flatterten vor Freude, als sich die Pferde in der Nähe beieinander niederließen und Lachen und Geschichten von ihren Abenteuern teilten. Als der Sturm vorüberging, brach die Sonne durch die Wolken und warf ein strahlendes Licht über Willowdale. Die Pferde dankten Ella für ihre Großzügigkeit und versprachen, dasselbe zu tun, wenn jemand Hilfe benötigte. Und von diesem Tag an war Willowdale erfüllt mit Mondblumenflügeln und Sonnensmiles! Das Ende!
+==========
+Prompt: 253 tokens, 118.154 tokens-per-sec
+Generation: 368 tokens, 18.318 tokens-per-sec
+Peak memory: 4.484 GB
+
+Everything took 52.7 seconds

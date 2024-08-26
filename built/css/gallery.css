@@ -1,6 +1,6 @@
 body#gallery {
     display: grid;
-    grid-template-rows: var(--height-header) auto auto auto 100px; /* Define rows including the footer */
+    grid-template-rows: 0 var(--height-header) auto auto auto 100px; /* Define rows including the footer */
     min-height: 100vh; /* Ensure the grid spans the full viewport height */
     font-family: Arial, sans-serif;
     margin: 0;
@@ -54,14 +54,69 @@ body#gallery {
     }
 }
 
+
+
+#menu {
+    width: 100vw;
+    position: sticky; 
+      justify-content: center;
+    top: 0; 
+    z-index: 1000; 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
+    --logo-height: 200px;
+}
+
+#menu a {
+    text-decoration: none;
+    transform: translateX(-40vw);
+}
+
+
+@media screen and (min-width: 1200px) {
+    #menu a {
+        transform: translateX(-525px);
+    }
+}
+
+#menu a:focus {
+    background: transparent;
+    color: transparent;
+    outline: none;
+}
+
+#menu img {
+     position: absolute;
+}
+
+#menu img:first-of-type {
+    height: var(--logo-height); 
+    cursor: pointer; 
+    transition: 200ms;
+    transform: translateY(-60px);
+}
+
+#menu img:nth-of-type(2)  {
+    margin: 10px auto auto 5px;
+    height: calc(var(--logo-height) * 0.35); 
+    cursor: pointer; 
+    transition: 200ms;
+}
+
+#menu img:hover:nth-of-type(1) img,
+#menu img:hover:nth-of-type(2)  {
+    transform: scale(1.05);
+}
+
+
 .header-container {
     grid-column: 1 / -1; 
-    grid-row: 1; 
+    grid-row: 2; 
     display: flex;
     justify-content: space-between;
     align-items: center;
     height: 100%; 
     padding: 20px;
+    margin-top: calc(var(--gap) * -1);
     margin-bottom: calc(3 * var(--body-padding));
     border-radius: 0 0 25px 25px;
     background-color: rgba(255, 255, 255, 0.8);
@@ -69,7 +124,7 @@ body#gallery {
         0 2px 2px rgba(0, 0, 0, 0.1),
         0 4px 4px rgba(0, 0, 0, 0.1),
         0 8px 8px rgba(0, 0, 0, 0.1);
-    background-image: url('../../built/image/header-gallery.png');
+    background-image: url('/built/image/header-gallery.jpg');
     background-size: cover;
     background-repeat: no-repeat;
     background-position: left bottom;
@@ -129,13 +184,11 @@ body#gallery {
         margin: 0;
         font-size: var(--font-size-15);
         line-height: var(--line-height-1);
-        color: #333;
         text-align: right;
     }
     .title h1 span {
         font-size: var(--font-size-4);
         line-height: var(--line-height-1);
-        color: #333;
         text-align: left;
         margin-right: -30px;
     }
@@ -150,27 +203,25 @@ body#gallery {
         margin: 0;
         font-size: var(--font-size-25);
         line-height: var(--line-height-175);
-        color: #333;
         text-align: right;
     }
     .title h1 span {
         font-size: var(--font-size-6);
         line-height: var(--line-height-1);
-        color: #333;
         text-align: left;
         margin-right: -30px;
     }
 }
 
 .story-generator-box {
-    grid-column: 1 / -1; /* Span full width */
-    grid-row: 2; /* Place in the second row */
+    grid-column: 1 / -1; 
+    grid-row: 3; 
     display: flex;
     justify-content: space-between;
     align-items: center;
     background-color: rgba(255, 255, 255, 0.8);
     padding: 20px;
-    margin: 20px auto;
+    margin: 0px auto 20px auto;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     max-width: 1200px;
@@ -179,7 +230,7 @@ body#gallery {
 
 .generate-story-btn {
     padding: 10px 20px;
-    font-size: 16px;
+    font-size: var(--font-size-125);
     background-color: var(--color-first);
     color: white;
     border: none;
@@ -195,7 +246,7 @@ body#gallery {
 .generate-story-explanation {
     flex: 1;
     margin-left: 20px;
-    font-size: 14px;
+    font-size: var(--font-size-1);
     color: #333;
 }
 
@@ -216,7 +267,7 @@ body#gallery {
 
 .gallery-container {
     grid-column: 1 / -1; 
-    grid-row: 3; /* Place in the third row */
+    grid-row: 4; 
     display: grid;
     grid-template-columns: repeat(1, minmax(250px, 1fr)); 
     gap: var(--gap);
@@ -242,32 +293,59 @@ body#gallery {
 
 .story {
     position: relative;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 1 / 0.85;
     background-size: cover;
-    background-position: center;
+    background-position: center center;
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
     text-decoration: none;
     color: inherit;
 }
 
-.story span {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    right: 10px;
-    background-color: rgba(0, 0, 0, 0.6);
-    color: white;
-    padding: 5px;
-    border-radius: 5px;
-    text-align: center;
-    font-size: 1.2em;
+.story::after {
+    content: '';
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    height: var(--height); 
+    top: calc(100% - var(--height));
+    background: linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 50%, rgba(255,255,255,0) 100%);
+    --height: 50%;
 }
 
+.story span {
+    position: absolute;
+    display: inline-block;
+    width: 80%;
+    margin: 50% auto auto auto;
+    color: white;
+    padding: 5px 0 5px var(--space-3);
+    border-radius: 0px 10px 10px 0px;
+    text-align: center;
+    font-size: var(--font-size-135);
+    line-height: var(--line-height-15);
+    text-align: left;
+    z-index: 2;
+}
+
+a:nth-last-of-type(n+2) .story span {
+    margin: 60% auto auto auto;
+}
+
+
+a:nth-last-of-type(n+3) .story span {
+    margin: 55% auto auto 20%;
+    text-align: right;
+    padding: 5px var(--space-3) 5px 0;
+}
+
+
+
 .button-container {
-    grid-column: 1 / -1; /* Span full width */
-    grid-row: 4; /* Place in the fourth row */
+    grid-column: 1 / -1; 
+    grid-row: 5; 
     display: flex;
     justify-content: center;
     padding: 20px;
@@ -290,8 +368,8 @@ body#gallery {
 }
 
 .footer {
-    grid-column: 1 / -1; /* Span full width */
-    grid-row: 5; /* Place in the fifth row */
+    grid-column: 1 / -1; 
+    grid-row: 6; 
     background-color: rgba(255, 255, 255, 0.8);
     border-radius: 25px 25px 0 0;
     height: 100px; /* Set fixed height */
