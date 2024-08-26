@@ -1,8 +1,8 @@
-# <font color="red"> OhanashiGPT </font>
+# OhanashiGPT
 
 ![alt text](/built/image/The_Golden_Dragons_Ancient_Secret_Revealed.jpg "Title")
 
-ChildGPT is an innovative application that creates custom children's stories based on input parameters such as age and other preferences. What sets this app apart is its ability to narrate these stories using an AI-generated voice that mimics a parent or loved one, trained on their voice samples. Additionally, the app generates captivating images to accompany each story, providing a unique and engaging experience for children.
+OhanashiGPT is an innovative application that creates custom children's stories based on input parameters such as age and other preferences. What sets this app apart is its ability to narrate these stories using an AI-generated voice that mimics a parent or loved one, trained on their voice samples. Additionally, the app generates captivating images to accompany each story, providing a unique and engaging experience for children.
 
 
 # Childrens' Book Generation App
@@ -19,16 +19,16 @@ The app runs as a web interface where you can customize your story settings. Hit
 - **Interactive Experience**: Engaging storytelling for children, even when parents can't be there in person.
 
 ## Try out our app  
-To run the app locally you have to install the depencies, download the models and start the server. You can find a detailed instruction [here](https://github.com/merekat/children-stories/blob/main/app_instruction.md).
+To run the app locally you have to install the depencies, download the models and start the server. You can find a detailed instruction [here](./app_instruction.md).
 
 
 
 # DIY Tutorials
 
-- [Finetuning large language models (LLMs) using Quantized Low Rank Adapters (QLoRA)](https://github.com/merekat/children-stories/tree/main/Tutorials/LLM_QLoRA) <font color="red"> @Nobu You are in charge of making this notebook </font>
+- [Finetuning large language models (LLMs) using Quantized Low-Rank Adaptation (QLoRA)](./finetuning/LLM_QLoRA)
 
-- [Deniz's stuff](https://) <font color="red"> @Deniz You are in charge of making this notebook. </font>
+- [Deniz's stuff](https://) @Deniz You are in charge of making this notebook.
 
-- [Text-to-image: Run quantized flux1.schnell on your local GPU](https://github.com/merekat/children-stories/blob/main/text-to-image/flux1.schnell/DIY_text-to-image_flux1.schnell.ipynb)
+- [Text-to-image: Run quantized flux1.schnell on your local GPU](./text-to-image/flux1.schnell/DIY_text-to-image_flux1.schnell.ipynb)
 
-- [Simon's stuff](https://) <font color="red"> @Simon You are in charge of making this notebook. It's sort of up to you. Do you have ideas?</font>
+- [Simon's stuff](https://) @Simon You are in charge of making this notebook. It's sort of up to you. Do you have ideas?

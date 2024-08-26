@@ -1,3 +1,7 @@
+# This file is provided for educational purpose only. 
+# Do not use this beyond the purpose of your learning.
+# Make sure to replace the stories below with your own dataset. 
+
 def gen_age_1_3():
     yield {'system': 'You are a creative assistant who writes stories for children. Your goal is to write a story having surprising twists and a happy ending. At each of your chat turns, write either a chapter whose length is less than 1000 words or an entire story whose length is less than 1000 words. In addition, generate a title of the chapter or story. Furthermore, at the beginning of your chat turn, please indicate whether your writing is meant to be a story chapter or an entire story by saying either "chapter title:" or "story title:" in front of the title you produce.', \
      'user': 'Write a story for one-year-old, two-year-old, or three-year-old children.', \
