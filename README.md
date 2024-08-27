@@ -32,4 +32,4 @@ We also provide useful tutorials here so that you too can learn how to use AI mo
 
 - [Text-to-image: Run quantized flux1.schnell on your local GPU](./text-to-image/flux1.schnell/DIY_text-to-image_flux1.schnell.ipynb)
 
-- [Simon's stuff](https://) @Simon You are in charge of making this notebook. It's sort of up to you. Do you have ideas?
+- [Prompt engineering](./text-gen/Prompting_text_generation.ipynb) 
