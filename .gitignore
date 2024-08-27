@@ -1,0 +1,24 @@
+# Ignore all .log files
+**/*.log
+
+# Ignore the build directory
+./built/model/
+./built/static/story/*
+./built/static/audio/*
+
+
+# Ignore a specific file
+.python-version
+.venv
+.DS_Store
+.cache
+*.gguf
+*.GGUF
+*.safetensors
+
+#Igonre any directory named "models"
+**/models/*
+**/models/
+built/static/audio/*.wav
+voice-cloning/inputs/*.wav
+voice-cloning/outputs/*.wav
