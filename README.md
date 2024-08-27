@@ -28,8 +28,8 @@ We also provide useful tutorials here so that you too can learn how to use AI mo
 
 - [Finetuning large language models (LLMs) using Quantized Low-Rank Adaptation (QLoRA)](./finetuning/LLM_QLoRA)
 
-- [Deniz's stuff](https://) @Deniz You are in charge of making this notebook.
+- [Finetuning text-to-image (SDXL) using LoRA](./text-to-image/sd_xl/SDXL_LoRA_colab.ipynb)
 
-- [Text-to-image: Run quantized flux1.schnell on your local GPU](./text-to-image/flux1.schnell/DIY_text-to-image_flux1.schnell.ipynb)
+- [Running text-to-image Flux1.schnell model locally](./text-to-image/flux1.schnell/DIY_text-to-image_flux1.schnell.ipynb)
 
-- [Prompt engineering](./text-gen/Prompting_text_generation.ipynb) 
+- [Prompt engineering for text generation](./text-gen/Prompting_text_generation.ipynb) 
