@@ -2,7 +2,7 @@
 # Implementation of 
 # 1) Prompt generation
 # 2) Story generation
-# 3) Stroty translation to German
+# 3) Story translation to German
 # using the mlx-lm library for Apple Silicon chips
 
 import os
