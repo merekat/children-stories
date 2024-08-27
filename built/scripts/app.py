@@ -110,12 +110,10 @@ llm = Llama(model_path=os.path.join(model_directory, model_name),
             )
 
 # Loade XTTS v2 model
-device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 model_name = 'tts_models/multilingual/multi-dataset/xtts_v2'
 tts = TTS(model_name=model_name, progress_bar=False, gpu=torch.cuda.is_available())
 
 # Loade Stable Diffusion model
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f"Using device: {device}")
 vae = AutoencoderKL.from_single_file("../model/imagegen-fix.safetensors", torch_dtype=torch.float16)
 pipe = StableDiffusionXLPipeline.from_single_file(
