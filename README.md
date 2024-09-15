@@ -11,7 +11,7 @@ OhanashiGPT is an innovative application that creates custom stories for childre
 
 The app runs as a web interface where you can customize your story settings. Hitting the "Generate Story" button will create a story, a cover picture and audio files that read the story to the user. You can find previously-generated stories in the "Explore" section. Previously-generated stories can be played with a different voice. It is also possible to add your own voice to the list of speakers.  
 
-[![Watch the video](https://github.com/merekat/children-stories/blob/main/thumbnail.png)](https://github.com/merekat/children-stories/blob/main/OhanashiGPT_small.mp4)
+[![OhanashiGPT](https://github.com/merekat/children-stories/blob/main/thumbnail.png)]([https://www.youtube.com/watch?v=VIDEO_ID](https://www.youtube.com/watch?v=7BPh6-8ra6Q))
 
 ## Features
 
