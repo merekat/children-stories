@@ -48,7 +48,7 @@
     ```
 
 4. **Download and Prepare Models**
-Ensure you have the model files in the built/model directory. Run text_generation.py to download and train prebuilt models. This might take some time.
+Ensure you have the model files in the built/model directory. Run downloads.py to download and train prebuilt models. This might take some time.
 
    ```bash
    python downloads.py  
